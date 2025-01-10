@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class JCFChannelService implements ChannelService {
-    private static Map<String, Channel> channelData = new HashMap<>();
+    private Map<String, Channel> channelData = new HashMap<>();
 
     @Override
     public Channel create(Channel newChannel) {
@@ -109,7 +109,7 @@ public class JCFChannelService implements ChannelService {
     }
 
 
-    public static boolean isChannelIdDuplicate(String channelId) {
+    private boolean isChannelIdDuplicate(String channelId) {
         return channelData.containsKey(channelId);
     }
 
