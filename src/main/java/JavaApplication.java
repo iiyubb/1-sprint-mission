@@ -101,18 +101,40 @@ public class JavaApplication {
         channelService.create(groupCh);
         System.out.println("[생성 성공] Channel ID: " + groupCh.getChannelId() + " / Channel Name: " + groupCh.getChannelName());
 
-        // 2.2. 채널 읽기 (Channel ID 지정)
+        // 2.2. 채널에 User 추가
+        codeitCh.addUser(userYB);
+        codeitCh.addUser(userYH);
+        groupCh.addUser(userYB);
+
+        // 2.3. 채널 User 확인
+        System.out.println("\nChannel User 확인");
+        System.out.println("- Codeit Channel User 확인");
+        List<User> codeitChUserList = channelService.getUserList(codeitCh.getChannelId());
+        codeitChUserList.stream().map(User::getUserName).forEach(System.out::println);
+
+        System.out.println("- Group 1 Channel User 확인");
+        List<User> groupChUserList = channelService.getUserList(groupCh.getChannelId());
+        groupChUserList.stream().map(User::getUserName).forEach(System.out::println);
+
+        // 2.4. 채널 User 삭제
+        System.out.println("\nChannel User 삭제");
+        channelService.deleteUser(codeitCh.getChannelId(), userYH);
+        System.out.println("- Codeit Channel User 확인");
+        List<User> codeitChUserList2 = channelService.getUserList(codeitCh.getChannelId());
+        codeitChUserList2.stream().map(User::getUserName).forEach(System.out::println);
+
+        // 2.5. 채널 읽기 (Channel ID 지정)
         System.out.println("\n* Codeit Channel만 읽기");
         Channel readCodeitCh = channelService.readById(codeitCh.getChannelId());
         System.out.println("Channel ID: " + readCodeitCh.getChannelId() + " / Channel Name: " + readCodeitCh.getChannelName());
 
-        // 2.3. 채널 이름 수정
+        // 2.6. 채널 이름 수정
         System.out.println("\n* Channel Name 수정");
         Channel newCodeitCh = new Channel("Codeit Mission 1");
         Channel updateCodeitCh = channelService.update(codeitCh.getChannelId(), newCodeitCh);
         System.out.println("[수정 성공] Channel ID: " + updateCodeitCh.getChannelId() + " / Channel Name: " + updateCodeitCh.getChannelName());
 
-        // 2.4. 채널 이름 수정 불가
+        // 2.7. 채널 이름 수정 불가
         System.out.println("\n* Channel Name 수정 불가");
         System.out.println("- 'Codeit Mission 1' 채널을 'Group 1 Channel'로 변경 시도");
         Channel newCodeitCh2 = new Channel("Group 1 Channel");
@@ -122,7 +144,7 @@ public class JavaApplication {
             System.out.println(e.getMessage());
         }
 
-        // 2.5. 채널 삭제
+        // 2.8. 채널 삭제
         System.out.println("\n* Channel 삭제");
         System.out.println("- 현재 채널 목록 확인");
         channelService.readAll().stream()
@@ -130,7 +152,7 @@ public class JavaApplication {
                 .sorted()
                 .forEach(System.out::println);
 
-        channelService.delete(groupCh.getChannelId());
+        channelService.deleteChannel(groupCh.getChannelId());
         System.out.println("- 채널 목록 확인");
         channelService.readAll().stream()
                 .map(Channel::getChannelName)
@@ -147,15 +169,15 @@ public class JavaApplication {
 
         // 3.1. 메세지 생성
         System.out.println("* 매세지 생성 확인");
-        Message message1 = new Message(userYH, userYB, "안녕!!!!!!!");
+        Message message1 = new Message(userYH, userYB, codeitCh, "안녕!!!!!!!");
         messageService.create(message1);
         System.out.println("[생성 성공] 발신자: " + message1.getSendUser().getUserName()
                 + " -> 수신자: "+ message1.getReceiveUser().getUserName()
                 + "\n내용: " + message1.getMessageDetail());
 
-        Message message2 = new Message(userYB, userYH, "Hello Hello");
+        Message message2 = new Message(userYB, userYH, codeitCh, "Hello Hello");
         messageService.create(message2);
-        System.out.println("[생성 성공] 발신자: " + message2.getSendUser().getUserName()
+        System.out.println("\n[생성 성공] 발신자: " + message2.getSendUser().getUserName()
                 + " -> 수신자: "+ message2.getReceiveUser().getUserName()
                 + "\n내용: " + message2.getMessageDetail());
 
@@ -163,13 +185,18 @@ public class JavaApplication {
         System.out.println("\n* 메세지 전부 확인");
         messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
 
-        // 3.3. 메세지 수정
+        // 3.3. 메세지 채널 확인
+        System.out.println("\n* 메세지 채널 확인");
+        System.out.println("- 첫번째 메세지가 전송된 채널: " + messageService.getChannel(message1.getMessageId()).getChannelName());
+        System.out.println("- 두번째 메세지가 전송된 채널: " + messageService.getChannel(message2.getMessageId()).getChannelName());
+
+        // 3.4. 메세지 수정
         System.out.println("\n* 메세지 수정");
-        Message newMessage = new Message(userYH, userYB, "안녕...");
-        Message updateMessage = messageService.update(message1.getMessageId(), newMessage);
+        Message newMessage = new Message(userYH, userYB, codeitCh, "안녕...");
+        Message updateMessage = messageService.updateMessage(message1.getMessageId(), newMessage);
         System.out.println("수정된 메세지: " + updateMessage.getMessageDetail());
 
-        // 3.4. 메세지 삭제
+        // 3.5. 메세지 삭제
         System.out.println("\n* 메세지 삭제");
         System.out.println("- 현재 메세지 목록 확인");
         messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
