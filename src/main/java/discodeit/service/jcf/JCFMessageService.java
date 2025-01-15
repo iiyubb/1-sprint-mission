@@ -4,11 +4,11 @@ import discodeit.entity.Channel;
 import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.service.MessageService;
-import discodeit.service.jcf.JCFChannelService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JCFMessageService implements MessageService {
     private Map<String, Message> messageData = new HashMap<>();
@@ -41,9 +41,18 @@ public class JCFMessageService implements MessageService {
     @Override
     public Message readById(String messageId) {
         if (!messageData.containsKey(messageId)) {
-            throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
+            throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
         return messageData.get(messageId);
+    }
+
+    @Override
+    public List<Message> readByChannel(String channelId) {
+        List<String> channelList = messageData.values().stream().map(message -> message.getChannel().getChannelId()).toList();
+        if (!channelList.contains(channelId)) {
+            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
+        }
+        return messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
     }
 
     @Override
@@ -72,9 +81,14 @@ public class JCFMessageService implements MessageService {
     }
 
     @Override
+    public void deleteByChannel(Channel channel) {
+        messageData.values().removeIf(message -> message.getChannel().equals(channel));
+    }
+
+    @Override
     public Channel getChannel(String messageId) {
         if (!messageData.containsKey(messageId)) {
-            throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
+            throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
         return messageData.get(messageId).getChannel();
     }
