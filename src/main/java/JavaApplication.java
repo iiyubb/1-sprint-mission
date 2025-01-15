@@ -11,8 +11,8 @@ public class JavaApplication {
     public static void main(String[] args) {
 
         JCFUserService userService = new JCFUserService();
-        JCFChannelService channelService = new JCFChannelService();
         JCFMessageService messageService = new JCFMessageService();
+        JCFChannelService channelService = new JCFChannelService(userService, messageService);
 
         // 1. User
         System.out.println("*** User Test ***");
@@ -31,6 +31,10 @@ public class JavaApplication {
         User userYH = new User("김영희", "younghee@hanmail.net", "010-9999-9999");
         userService.create(userYH);
         System.out.println("[등록 성공] User ID: " + userYH.getUserId() + " / User Name: " + userYH.getUserName());
+
+        User userCS = new User("김철수", "cheolsu@yahoo.com", "010-7777-7777");
+        userService.create(userCS);
+        System.out.println("[등록 성공] User ID: " + userCS.getUserId() + " / User Name: " + userCS.getUserName());
 
         // 1.2. User 전화번호 중복
         System.out.println("\n* User 등록 시 전화번호 중복 오류");
@@ -52,27 +56,20 @@ public class JavaApplication {
 
         // 1.4. 유저 모두 읽기
         System.out.println("\n* User 모두 읽기");
-        userService.readAll().stream()
-                .map(User::getUserName)
-                .sorted()
-                .forEach(username -> System.out.print(username + " "));
+        userService.readAll().stream().map(User::getUserName).sorted().forEach(username -> System.out.print(username + " "));
         System.out.println();
 
         // 1.5. 유저 수정
         System.out.println("\n* User 수정");
         User newUserYB = new User("이유빈", "yubin@codeit.com", "010-1111-1111");
         User updateUserYB = userService.update(userYB.getUserId(), newUserYB);
-        System.out.println("[수정 성공] User ID: " + updateUserYB.getUserId() + " / User Name: " + updateUserYB.getUserName()
-                + " / User e-mail: " + updateUserYB.getEmail() + " / User phone Number: " + updateUserYB.getPhoneNum());
+        System.out.println("[수정 성공] User ID: " + updateUserYB.getUserId() + " / User Name: " + updateUserYB.getUserName() + " / User e-mail: " + updateUserYB.getEmail() + " / User phone Number: " + updateUserYB.getPhoneNum());
 
         // 1.6. 유저 삭제
         System.out.println("\n* User 삭제");
         userService.delete(userMJ.getUserId());
         System.out.println("* 삭제된 User 목록 확인");
-        userService.readAll().stream()
-                .map(User::getUserName)
-                .sorted()
-                .forEach(username -> System.out.print(username + " "));
+        userService.readAll().stream().map(User::getUserName).sorted().forEach(username -> System.out.print(username + " "));
         System.out.println();
 
         // 1.7. 유저 삭제 불가
@@ -101,10 +98,20 @@ public class JavaApplication {
         channelService.create(groupCh);
         System.out.println("[생성 성공] Channel ID: " + groupCh.getChannelId() + " / Channel Name: " + groupCh.getChannelName());
 
+        Channel directCh = new Channel("Direct Channel");
+        channelService.create(directCh);
+        System.out.println("[생성 성공] Channel ID: " + directCh.getChannelId() + " / Channel Name: " + directCh.getChannelName());
+
         // 2.2. 채널에 User 추가
         codeitCh.addUser(userYB);
         codeitCh.addUser(userYH);
+        codeitCh.addUser(userCS);
+
         groupCh.addUser(userYB);
+        groupCh.addUser(userYH);
+
+        directCh.addUser(userYH);
+        directCh.addUser(userCS);
 
         // 2.3. 채널 User 확인
         System.out.println("\nChannel User 확인");
@@ -115,6 +122,10 @@ public class JavaApplication {
         System.out.println("- Group 1 Channel User 확인");
         List<User> groupChUserList = channelService.getUserList(groupCh.getChannelId());
         groupChUserList.stream().map(User::getUserName).forEach(System.out::println);
+
+        System.out.println("- Direct Channel User 확인");
+        List<User> directChUserList = channelService.getUserList(directCh.getChannelId());
+        directChUserList.stream().map(User::getUserName).forEach(System.out::println);
 
         // 2.4. 채널 User 삭제
         System.out.println("\nChannel User 삭제");
@@ -147,17 +158,11 @@ public class JavaApplication {
         // 2.8. 채널 삭제
         System.out.println("\n* Channel 삭제");
         System.out.println("- 현재 채널 목록 확인");
-        channelService.readAll().stream()
-                        .map(Channel::getChannelName)
-                .sorted()
-                .forEach(System.out::println);
+        channelService.readAll().stream().map(Channel::getChannelName).sorted().forEach(System.out::println);
 
         channelService.deleteChannel(groupCh.getChannelId());
         System.out.println("- 채널 목록 확인");
-        channelService.readAll().stream()
-                .map(Channel::getChannelName)
-                .sorted()
-                .forEach(System.out::println);
+        channelService.readAll().stream().map(Channel::getChannelName).sorted().forEach(System.out::println);
 
         System.out.println();
         System.out.println();
@@ -171,15 +176,15 @@ public class JavaApplication {
         System.out.println("* 매세지 생성 확인");
         Message message1 = new Message(userYH, userYB, codeitCh, "안녕!!!!!!!");
         messageService.create(message1);
-        System.out.println("[생성 성공] 발신자: " + message1.getSendUser().getUserName()
-                + " -> 수신자: "+ message1.getReceiveUser().getUserName()
-                + "\n내용: " + message1.getMessageDetail());
+        System.out.println("[생성 성공] 발신자: " + message1.getSendUser().getUserName() + " -> 수신자: " + message1.getReceiveUser().getUserName() + "\n내용: " + message1.getMessageDetail());
 
         Message message2 = new Message(userYB, userYH, codeitCh, "Hello Hello");
         messageService.create(message2);
-        System.out.println("\n[생성 성공] 발신자: " + message2.getSendUser().getUserName()
-                + " -> 수신자: "+ message2.getReceiveUser().getUserName()
-                + "\n내용: " + message2.getMessageDetail());
+        System.out.println("\n[생성 성공] 발신자: " + message2.getSendUser().getUserName() + " -> 수신자: " + message2.getReceiveUser().getUserName() + "\n내용: " + message2.getMessageDetail());
+
+        Message message3 = new Message(userCS, userYH, directCh, "영희야 안녕?");
+        messageService.create(message3);
+        System.out.println("\n[생성 성공] 발신자: " + message3.getSendUser().getUserName() + " -> 수신자: " + message3.getReceiveUser().getUserName() + "\n내용: " + message3.getMessageDetail());
 
         // 3.2. 메세지 확인
         System.out.println("\n* 메세지 전부 확인");
@@ -189,14 +194,24 @@ public class JavaApplication {
         System.out.println("\n* 메세지 채널 확인");
         System.out.println("- 첫번째 메세지가 전송된 채널: " + messageService.getChannel(message1.getMessageId()).getChannelName());
         System.out.println("- 두번째 메세지가 전송된 채널: " + messageService.getChannel(message2.getMessageId()).getChannelName());
+        System.out.println("- 세번째 메세지가 전송된 채널: " + messageService.getChannel(message3.getMessageId()).getChannelName());
 
-        // 3.4. 메세지 수정
+        // 3.4. 해당 채널의 모든 메세지 확인
+        System.out.println("\n* 'Codeit Channel'의 모든 Message 읽기");
+        List<Message> codeitChMessage = channelService.getMessageList(codeitCh.getChannelId());
+        codeitChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
+
+        System.out.println("\n* 'Direct Channel'의 모든 Message 읽기");
+        List<Message> directChMessage = channelService.getMessageList(directCh.getChannelId());
+        directChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
+
+        // 3.5. 메세지 수정
         System.out.println("\n* 메세지 수정");
         Message newMessage = new Message(userYH, userYB, codeitCh, "안녕...");
         Message updateMessage = messageService.updateMessage(message1.getMessageId(), newMessage);
         System.out.println("수정된 메세지: " + updateMessage.getMessageDetail());
 
-        // 3.5. 메세지 삭제
+        // 3.6. 메세지 삭제
         System.out.println("\n* 메세지 삭제");
         System.out.println("- 현재 메세지 목록 확인");
         messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
