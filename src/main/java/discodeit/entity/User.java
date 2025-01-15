@@ -1,4 +1,5 @@
 package discodeit.entity;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -19,17 +20,29 @@ public class User {
     }
 
     // Getter
-    public String getUserId() { return userId; }
+    public String getUserId() {
+        return userId;
+    }
 
-    public String getUserName() { return userName; }
+    public String getUserName() {
+        return userName;
+    }
 
-    public String getEmail() { return email; }
+    public String getEmail() {
+        return email;
+    }
 
-    public String getPhoneNum() { return phoneNum; }
+    public String getPhoneNum() {
+        return phoneNum;
+    }
 
-    public long getCreatedAt() { return createdAt; }
+    public long getCreatedAt() {
+        return createdAt;
+    }
 
-    public long getUpdatedAt() { return updatedAt; }
+    public long getUpdatedAt() {
+        return updatedAt;
+    }
 
     // Setter
     public void updateEmail(String email) {

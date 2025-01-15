@@ -19,17 +19,29 @@ public class Channel {
     }
 
     // Getter
-    public String getChannelId() { return channelId; }
+    public String getChannelId() {
+        return channelId;
+    }
 
-    public String getChannelName() { return channelName; }
+    public String getChannelName() {
+        return channelName;
+    }
 
-    public User getUser(String userId) { return users.get(userId); }
+    public User getUser(String userId) {
+        return users.get(userId);
+    }
 
-    public Map<String, User> getUsers() { return users; }
+    public Map<String, User> getUsers() {
+        return users;
+    }
 
-    public long getCreatedAt() { return createdAt; }
+    public long getCreatedAt() {
+        return createdAt;
+    }
 
-    public long getUpdatedAt() { return updatedAt; }
+    public long getUpdatedAt() {
+        return updatedAt;
+    }
 
     // Setter
     public void updateChannelName(String channelName) {
