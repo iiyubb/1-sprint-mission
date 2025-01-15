@@ -3,7 +3,6 @@ package discodeit.service.jcf;
 import discodeit.entity.User;
 import discodeit.service.UserService;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +28,10 @@ public class JCFUserService implements UserService {
         if (isPhoneNumDuplicate(phoneNum)) {
             throw new IllegalArgumentException("[error] 이미 존재하는 전화번호입니다.");
         }
-        if (!isValidPhoneNum(phoneNum)) {
+        if (isValidPhoneNum(phoneNum)) {
             throw new IllegalArgumentException("[error] 유효하지 않은 전화번호 형식입니다. '010-0000-0000' 형식으로 작성해 주세요.");
         }
-        if (!isValidEmail(email)) {
+        if (isValidEmail(email)) {
             throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
         }
 
@@ -43,7 +42,7 @@ public class JCFUserService implements UserService {
     @Override
     public User readById(String userId) {
         if (!userData.containsKey(userId)) {
-            throw new RuntimeException("[error] 존재하지 않는 user ID입니다.");
+            throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
         return userData.get(userId);
     }
@@ -56,7 +55,7 @@ public class JCFUserService implements UserService {
     @Override
     public User update(String userId, User updateUser) {
         if (!userData.containsKey(userId)) {
-            throw new RuntimeException("[error] 존재하지 않는 user ID입니다.");
+            throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
         User originUser = userData.get(userId);
 
@@ -64,13 +63,13 @@ public class JCFUserService implements UserService {
         if (isPhoneNumDuplicate(updateUser.getPhoneNum())) {
             throw new IllegalArgumentException("[error] 이미 존재하는 전화번호입니다.");
         }
-        if (!isValidPhoneNum(updateUser.getPhoneNum())) {
+        if (isValidPhoneNum(updateUser.getPhoneNum())) {
             throw new IllegalArgumentException("[error] 유효하지 않은 전화번호 형식입니다. '010-0000-0000' 형식으로 작성해 주세요.");
         }
-        if(isEmailDuplicate((updateUser.getEmail()))) {
+        if (isEmailDuplicate((updateUser.getEmail()))) {
             throw new IllegalArgumentException("[error] 이미 존재하는 E-mail입니다.");
         }
-        if (!isValidEmail(updateUser.getEmail())) {
+        if (isValidEmail(updateUser.getEmail())) {
             throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
         }
 
@@ -82,7 +81,7 @@ public class JCFUserService implements UserService {
     @Override
     public void delete(String userId) {
         if (!userData.containsKey(userId)) {
-            throw new RuntimeException("[error] 존재하지 않는 user ID입니다.");
+            throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
 
         userData.remove(userId);
@@ -104,11 +103,11 @@ public class JCFUserService implements UserService {
 
     private boolean isValidPhoneNum(String phoneNum) {
         String phoneNumRegExp = "^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$";
-        return phoneNum.matches(phoneNumRegExp);
+        return !phoneNum.matches(phoneNumRegExp);
     }
 
     private boolean isValidEmail(String email) {
         String emailRegExp = "\\w+@\\w+\\.\\w+(\\.\\w+)?";
-        return email.matches(emailRegExp);
+        return !email.matches(emailRegExp);
     }
 }
