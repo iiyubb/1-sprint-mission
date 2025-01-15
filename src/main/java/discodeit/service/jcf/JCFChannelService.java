@@ -1,15 +1,24 @@
 package discodeit.service.jcf;
 
 import discodeit.entity.Channel;
+import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.service.ChannelService;
+import discodeit.service.MessageService;
+import discodeit.service.UserService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class JCFChannelService implements ChannelService {
-    private Map<String, Channel> channelData = new HashMap<>();
+    private Map<String, Channel> channelData;
+    private MessageService messageService;
+
+    public JCFChannelService(UserService userService, MessageService messageService) {
+        channelData = new HashMap<>();
+        this.messageService = messageService;
+    }
 
     @Override
     public Channel create(Channel newChannel) {
@@ -66,6 +75,7 @@ public class JCFChannelService implements ChannelService {
 
         channelData.remove(channelId);
         System.out.println("[삭제 완료]");
+        messageService.deleteByChannel(channelData.get(channelId));
     }
 
     @Override
@@ -93,6 +103,10 @@ public class JCFChannelService implements ChannelService {
         return channel.getUsers().values().stream().toList();
     }
 
+    @Override
+    public List<Message> getMessageList(String channelId) {
+        return messageService.readByChannel(channelId);
+    }
 
     @Override
     public void deleteUser(String channelId, User user) {
