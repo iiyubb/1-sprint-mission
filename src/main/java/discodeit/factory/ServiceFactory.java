@@ -6,6 +6,8 @@ import discodeit.service.jcf.JCFUserService;
 
 public interface ServiceFactory {
     JCFUserService createUserService();
+
     JCFChannelService createChannelService();
+
     JCFMessageService createMessageService();
 }

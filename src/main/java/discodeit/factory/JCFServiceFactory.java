@@ -4,7 +4,7 @@ import discodeit.service.jcf.JCFChannelService;
 import discodeit.service.jcf.JCFMessageService;
 import discodeit.service.jcf.JCFUserService;
 
-public class JCFServiceFactory implements ServiceFactory{
+public class JCFServiceFactory implements ServiceFactory {
 
     private JCFUserService userService;
     private JCFChannelService channelService;
