@@ -1,6 +1,8 @@
 import discodeit.entity.Channel;
 import discodeit.entity.Message;
 import discodeit.entity.User;
+import discodeit.factory.JCFServiceFactory;
+import discodeit.factory.ServiceFactory;
 import discodeit.service.jcf.JCFChannelService;
 import discodeit.service.jcf.JCFMessageService;
 import discodeit.service.jcf.JCFUserService;
@@ -10,9 +12,12 @@ import java.util.List;
 public class JavaApplication {
     public static void main(String[] args) {
 
-        JCFUserService userService = new JCFUserService();
-        JCFMessageService messageService = new JCFMessageService();
-        JCFChannelService channelService = new JCFChannelService(userService, messageService);
+        ServiceFactory serviceFactory = new JCFServiceFactory();
+
+        JCFUserService userService = serviceFactory.createUserService();
+        JCFMessageService messageService = serviceFactory.createMessageService();
+        JCFChannelService channelService = new JCFChannelService(messageService);
+
 
         // 1. User
         System.out.println("*** User Test ***");
