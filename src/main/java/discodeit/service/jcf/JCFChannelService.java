@@ -5,7 +5,6 @@ import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.service.ChannelService;
 import discodeit.service.MessageService;
-import discodeit.service.UserService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +14,7 @@ public class JCFChannelService implements ChannelService {
     private Map<String, Channel> channelData;
     private MessageService messageService;
 
-    public JCFChannelService(UserService userService, MessageService messageService) {
+    public JCFChannelService(MessageService messageService) {
         channelData = new HashMap<>();
         this.messageService = messageService;
     }
