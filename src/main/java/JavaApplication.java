@@ -3,10 +3,15 @@ import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.factory.JCFServiceFactory;
 import discodeit.factory.ServiceFactory;
+import discodeit.service.file.FileChannelService;
+import discodeit.service.file.FileMessageService;
+import discodeit.service.file.FileUserService;
 import discodeit.service.jcf.JCFChannelService;
 import discodeit.service.jcf.JCFMessageService;
 import discodeit.service.jcf.JCFUserService;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class JavaApplication {
@@ -14,9 +19,13 @@ public class JavaApplication {
 
         ServiceFactory serviceFactory = new JCFServiceFactory();
 
-        JCFUserService userService = serviceFactory.createUserService();
-        JCFMessageService messageService = serviceFactory.createMessageService();
-        JCFChannelService channelService = new JCFChannelService(messageService);
+        Path userDirectory = Paths.get("src/main/java/discodeit/data/user.json");
+        Path channelDirectory = Paths.get("src/main/java/discodeit/data/channel.json");
+        Path messageDirectory = Paths.get("src/main/java/discodeit/data/message.json");
+
+        FileUserService userService = new FileUserService(userDirectory);
+        FileMessageService messageService = new FileMessageService(messageDirectory);
+        FileChannelService channelService = new FileChannelService(channelDirectory, messageService);
 
 
         // 1. User
@@ -171,58 +180,60 @@ public class JavaApplication {
 
         System.out.println();
         System.out.println();
-
-
-        // 3. Message
-        System.out.println("*** Message Test ***");
-        System.out.println();
-
-        // 3.1. 메세지 생성
-        System.out.println("* 매세지 생성 확인");
-        Message message1 = new Message(userYH, userYB, codeitCh, "안녕!!!!!!!");
-        messageService.create(message1);
-        System.out.println("[생성 성공] 발신자: " + message1.getSendUser().getUserName() + " -> 수신자: " + message1.getReceiveUser().getUserName() + "\n내용: " + message1.getMessageDetail());
-
-        Message message2 = new Message(userYB, userYH, codeitCh, "Hello Hello");
-        messageService.create(message2);
-        System.out.println("\n[생성 성공] 발신자: " + message2.getSendUser().getUserName() + " -> 수신자: " + message2.getReceiveUser().getUserName() + "\n내용: " + message2.getMessageDetail());
-
-        Message message3 = new Message(userCS, userYH, directCh, "영희야 안녕?");
-        messageService.create(message3);
-        System.out.println("\n[생성 성공] 발신자: " + message3.getSendUser().getUserName() + " -> 수신자: " + message3.getReceiveUser().getUserName() + "\n내용: " + message3.getMessageDetail());
-
-        // 3.2. 메세지 확인
-        System.out.println("\n* 메세지 전부 확인");
-        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
-
-        // 3.3. 메세지 채널 확인
-        System.out.println("\n* 메세지 채널 확인");
-        System.out.println("- 첫번째 메세지가 전송된 채널: " + messageService.getChannel(message1.getMessageId()).getChannelName());
-        System.out.println("- 두번째 메세지가 전송된 채널: " + messageService.getChannel(message2.getMessageId()).getChannelName());
-        System.out.println("- 세번째 메세지가 전송된 채널: " + messageService.getChannel(message3.getMessageId()).getChannelName());
-
-        // 3.4. 해당 채널의 모든 메세지 확인
-        System.out.println("\n* 'Codeit Channel'의 모든 Message 읽기");
-        List<Message> codeitChMessage = channelService.getMessageList(codeitCh.getChannelId());
-        codeitChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
-
-        System.out.println("\n* 'Direct Channel'의 모든 Message 읽기");
-        List<Message> directChMessage = channelService.getMessageList(directCh.getChannelId());
-        directChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
-
-        // 3.5. 메세지 수정
-        System.out.println("\n* 메세지 수정");
-        Message newMessage = new Message(userYH, userYB, codeitCh, "안녕...");
-        Message updateMessage = messageService.updateMessage(message1.getMessageId(), newMessage);
-        System.out.println("수정된 메세지: " + updateMessage.getMessageDetail());
-
-        // 3.6. 메세지 삭제
-        System.out.println("\n* 메세지 삭제");
-        System.out.println("- 현재 메세지 목록 확인");
-        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
-        System.out.println("- '안녕...' 메세지 삭제");
-        messageService.delete(message1.getMessageId());
-        System.out.println("- 메세지 목록 확인");
-        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
-    }
-}
+        }
+                }
+//
+//
+//        // 3. Message
+//        System.out.println("*** Message Test ***");
+//        System.out.println();
+//
+//        // 3.1. 메세지 생성
+//        System.out.println("* 매세지 생성 확인");
+//        Message message1 = new Message(userYH, userYB, codeitCh, "안녕!!!!!!!");
+//        messageService.create(message1);
+//        System.out.println("[생성 성공] 발신자: " + message1.getSendUser().getUserName() + " -> 수신자: " + message1.getReceiveUser().getUserName() + "\n내용: " + message1.getMessageDetail());
+//
+//        Message message2 = new Message(userYB, userYH, codeitCh, "Hello Hello");
+//        messageService.create(message2);
+//        System.out.println("\n[생성 성공] 발신자: " + message2.getSendUser().getUserName() + " -> 수신자: " + message2.getReceiveUser().getUserName() + "\n내용: " + message2.getMessageDetail());
+//
+//        Message message3 = new Message(userCS, userYH, directCh, "영희야 안녕?");
+//        messageService.create(message3);
+//        System.out.println("\n[생성 성공] 발신자: " + message3.getSendUser().getUserName() + " -> 수신자: " + message3.getReceiveUser().getUserName() + "\n내용: " + message3.getMessageDetail());
+//
+//        // 3.2. 메세지 확인
+//        System.out.println("\n* 메세지 전부 확인");
+//        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
+//
+//        // 3.3. 메세지 채널 확인
+//        System.out.println("\n* 메세지 채널 확인");
+//        System.out.println("- 첫번째 메세지가 전송된 채널: " + messageService.getChannel(message1.getMessageId()).getChannelName());
+//        System.out.println("- 두번째 메세지가 전송된 채널: " + messageService.getChannel(message2.getMessageId()).getChannelName());
+//        System.out.println("- 세번째 메세지가 전송된 채널: " + messageService.getChannel(message3.getMessageId()).getChannelName());
+//
+//        // 3.4. 해당 채널의 모든 메세지 확인
+//        System.out.println("\n* 'Codeit Channel'의 모든 Message 읽기");
+//        List<Message> codeitChMessage = channelService.getMessageList(codeitCh.getChannelId());
+//        codeitChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
+//
+//        System.out.println("\n* 'Direct Channel'의 모든 Message 읽기");
+//        List<Message> directChMessage = channelService.getMessageList(directCh.getChannelId());
+//        directChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
+//
+//        // 3.5. 메세지 수정
+//        System.out.println("\n* 메세지 수정");
+//        Message newMessage = new Message(userYH, userYB, codeitCh, "안녕...");
+//        Message updateMessage = messageService.updateMessage(message1.getMessageId(), newMessage);
+//        System.out.println("수정된 메세지: " + updateMessage.getMessageDetail());
+//
+//        // 3.6. 메세지 삭제
+//        System.out.println("\n* 메세지 삭제");
+//        System.out.println("- 현재 메세지 목록 확인");
+//        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
+//        System.out.println("- '안녕...' 메세지 삭제");
+//        messageService.delete(message1.getMessageId());
+//        System.out.println("- 메세지 목록 확인");
+//        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
+//    }
+//}
