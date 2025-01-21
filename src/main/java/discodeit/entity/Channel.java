@@ -11,6 +11,10 @@ public class Channel {
     private long updatedAt;
     private Map<String, User> users;
 
+    public Channel() {
+        this.channelId = UUID.randomUUID().toString();
+        this.createdAt = System.currentTimeMillis();
+    }
     public Channel(String channelName) {
         channelId = UUID.randomUUID().toString();
         this.channelName = channelName;

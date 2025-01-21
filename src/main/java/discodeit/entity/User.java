@@ -1,5 +1,7 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -10,6 +12,11 @@ public class User {
     private String phoneNum;
     private final long createdAt;
     private long updatedAt;
+
+    public User() {
+        this.userId = UUID.randomUUID().toString();
+        this.createdAt = System.currentTimeMillis();
+    }
 
     public User(String userName, String email, String phoneNum) {
         this.userId = UUID.randomUUID().toString();
