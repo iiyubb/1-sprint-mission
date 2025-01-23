@@ -14,7 +14,7 @@ public class JCFMessageService implements MessageService {
     private Map<String, Message> messageData = new HashMap<>();
 
     @Override
-    public Message create(Message newMessage) {
+    public void create(Message newMessage) {
         String messageId = newMessage.getMessageId();
         String messageDetail = newMessage.getMessageDetail();
         User sendUser = newMessage.getSendUser();
@@ -35,7 +35,6 @@ public class JCFMessageService implements MessageService {
         }
 
         messageData.put(messageId, newMessage);
-        return newMessage;
     }
 
     @Override

@@ -2,6 +2,7 @@ package discodeit.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.MapType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -53,7 +54,7 @@ public class FileUtil {
         }
     }
 
-    public static <T> Map<String, T> load(Path directory) {
+    public static <T> Map<String, T> load(Path directory, Class<T> type) {
         try {
             File jsonFile = directory.toFile();
             if (jsonFile.length() == 0) {
@@ -61,7 +62,8 @@ public class FileUtil {
                 return new HashMap<>();
             } else {
                 ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(jsonFile, new TypeReference<Map<String, T>>(){});
+                MapType mapType = mapper.getTypeFactory().constructMapType(Map.class, String.class, type);
+                return mapper.readValue(jsonFile, mapType);
             }
         } catch (IOException e) {
             throw new RuntimeException("파일 로드 실패: " + e.getMessage(), e);

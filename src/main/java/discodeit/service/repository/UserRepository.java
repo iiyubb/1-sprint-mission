@@ -1,4 +1,13 @@
 package discodeit.service.repository;
 
-public class UserRepository {
+import discodeit.entity.User;
+
+import java.nio.file.Path;
+import java.util.Map;
+
+public interface UserRepository {
+    void save(User user);
+    User loadById(String userId);
+    Map<String, User> loadAll();
+    void delete(User user);
 }

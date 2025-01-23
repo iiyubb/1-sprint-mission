@@ -16,9 +16,8 @@ public class Channel {
         this.createdAt = System.currentTimeMillis();
     }
     public Channel(String channelName) {
-        channelId = UUID.randomUUID().toString();
+        this();
         this.channelName = channelName;
-        createdAt = System.currentTimeMillis();
         users = new HashMap<>();
     }
 

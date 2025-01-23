@@ -20,7 +20,7 @@ public class JCFChannelService implements ChannelService {
     }
 
     @Override
-    public Channel create(Channel newChannel) {
+    public void create(Channel newChannel) {
         String channelId = newChannel.getChannelId();
         String channelName = newChannel.getChannelName();
 
@@ -35,7 +35,6 @@ public class JCFChannelService implements ChannelService {
         }
 
         channelData.put(channelId, newChannel);
-        return newChannel;
     }
 
     @Override

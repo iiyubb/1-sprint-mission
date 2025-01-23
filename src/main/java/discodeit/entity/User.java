@@ -19,11 +19,10 @@ public class User {
     }
 
     public User(String userName, String email, String phoneNum) {
-        this.userId = UUID.randomUUID().toString();
+        this();
         this.userName = userName;
         this.email = email;
         this.phoneNum = phoneNum;
-        this.createdAt = System.currentTimeMillis();
     }
 
     // Getter

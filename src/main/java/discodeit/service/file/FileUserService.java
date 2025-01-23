@@ -43,14 +43,14 @@ public class FileUserService implements Serializable, UserService {
             throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
         }
 
-        Map<String, User> userData = FileUtil.load(directory);
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         userData.put(userId, newUser);
         FileUtil.save(directory, userData);
     }
 
     @Override
     public User readById(String userId) {
-        Map<String, User> userData = FileUtil.load(directory);
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         if (!userData.containsKey(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
@@ -59,13 +59,13 @@ public class FileUserService implements Serializable, UserService {
 
     @Override
     public List<User> readAll() {
-        Map<String, User> userData = FileUtil.load(directory);
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.values().stream().toList();
     }
 
     @Override
     public User update(String userId, User updateUser) {
-        Map<String, User> userData = FileUtil.load(directory);
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         if (!userData.containsKey(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
@@ -93,7 +93,7 @@ public class FileUserService implements Serializable, UserService {
 
     @Override
     public void delete(String userId) {
-        Map<String, User> userData = FileUtil.load(directory);
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         if (!userData.containsKey(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
@@ -105,18 +105,17 @@ public class FileUserService implements Serializable, UserService {
 
     // 확인
     private boolean isUserIdDuplicate(String userId) {
-        Map<String, User> userData = FileUtil.load(directory);
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.containsKey(userId);
     }
 
     private boolean isPhoneNumDuplicate(String phoneNum) {
-        Map<String, User> userData = FileUtil.load(directory);
-        System.out.println(userData.values());
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.values().stream().anyMatch(user -> user.getPhoneNum().equals(phoneNum));
     }
 
     private boolean isEmailDuplicate(String email) {
-        Map<String, User> userData = FileUtil.load(directory);
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.values().stream().anyMatch(user -> user.getEmail().equals(email));
     }
 

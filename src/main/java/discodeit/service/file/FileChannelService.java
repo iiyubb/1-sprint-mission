@@ -25,7 +25,7 @@ public class FileChannelService implements Serializable, ChannelService {
     }
 
     @Override
-    public Channel create(Channel newChannel) {
+    public void create(Channel newChannel) {
         String channelId = newChannel.getChannelId();
         String channelName = newChannel.getChannelName();
 
@@ -39,15 +39,14 @@ public class FileChannelService implements Serializable, ChannelService {
             throw new IllegalArgumentException("[error] 이미 존재하는 채널 이름입니다.");
         }
 
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         channelData.put(channelId, newChannel);
         FileUtil.save(directory, channelData);
-        return newChannel;
     }
 
     @Override
     public Channel readById(String channelId) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
@@ -56,13 +55,13 @@ public class FileChannelService implements Serializable, ChannelService {
 
     @Override
     public List<Channel> readAll() {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         return channelData.values().stream().toList();
     }
 
     @Override
     public Channel update(String channelId, Channel updateChannel) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
@@ -79,7 +78,7 @@ public class FileChannelService implements Serializable, ChannelService {
 
     @Override
     public void deleteChannel(String channelId) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
@@ -92,13 +91,13 @@ public class FileChannelService implements Serializable, ChannelService {
 
     @Override
     public void addUser(String channelId, User user) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
+
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
 
         Channel channel = channelData.get(channelId);
-
         if (isUserDuplicate(channel, user.getUserId())) {
             throw new IllegalArgumentException("[error] 이미 존재하는 user입니다.");
         }
@@ -109,7 +108,7 @@ public class FileChannelService implements Serializable, ChannelService {
 
     @Override
     public List<User> getUserList(String channelId) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
@@ -125,7 +124,7 @@ public class FileChannelService implements Serializable, ChannelService {
 
     @Override
     public void deleteUser(String channelId, User user) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
 
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
@@ -142,16 +141,20 @@ public class FileChannelService implements Serializable, ChannelService {
 
 
     private boolean isChannelIdDuplicate(String channelId) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         return channelData.containsKey(channelId);
     }
 
     private boolean isChannelNameDuplicate(String channelName) {
-        Map<String, Channel> channelData = FileUtil.load(directory);
+        Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
         return channelData.values().stream().anyMatch(channel -> channel.getChannelName().equals(channelName));
     }
 
     private boolean isUserDuplicate(Channel channel, String userId) {
-        return channel.getUser(userId).getUserId().equals(userId);
+        if (channel.getUser(userId) == null) {
+            return false;
+        } else {
+            return channel.getUser(userId).getUserId().equals(userId);
+        }
     }
 }

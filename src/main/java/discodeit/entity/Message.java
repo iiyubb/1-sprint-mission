@@ -11,12 +11,16 @@ public class Message {
     private long updatedAt;
     private Channel channel;
 
-    public Message(User sendUser, User receiveUser, Channel channel, String messageDetail) {
+    public Message() {
         messageId = UUID.randomUUID().toString();
+        createdAt = System.currentTimeMillis();
+    }
+
+    public Message(User sendUser, User receiveUser, Channel channel, String messageDetail) {
+        this();
         this.sendUser = sendUser;
         this.receiveUser = receiveUser;
         this.messageDetail = messageDetail;
-        createdAt = System.currentTimeMillis();
         this.channel = channel;
     }
 

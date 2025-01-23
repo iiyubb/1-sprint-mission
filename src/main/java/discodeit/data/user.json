@@ -1,10 +1,26 @@
 {
-  "abcad328-b25c-43e0-be21-99bcfe7e0e5c" : {
-    "userId" : "abcad328-b25c-43e0-be21-99bcfe7e0e5c",
+  "49d710a3-2743-4645-be8f-3f2693249997" : {
+    "userId" : "49d710a3-2743-4645-be8f-3f2693249997",
     "userName" : "이유빈",
-    "email" : "yubin@gmail.com",
-    "phoneNum" : "010-1234-1234",
-    "createdAt" : 1737444870973,
+    "email" : "yubin@codeit.com",
+    "phoneNum" : "010-1111-1111",
+    "createdAt" : 1737451185855,
+    "updatedAt" : 1737451186713
+  },
+  "b5c6bdbc-0fe8-44c5-b496-a9969a63f457" : {
+    "userId" : "b5c6bdbc-0fe8-44c5-b496-a9969a63f457",
+    "userName" : "김영희",
+    "email" : "younghee@hanmail.net",
+    "phoneNum" : "010-9999-9999",
+    "createdAt" : 1737451186600,
+    "updatedAt" : 0
+  },
+  "08ad5145-da8c-4759-9f75-287e19987ed1" : {
+    "userId" : "08ad5145-da8c-4759-9f75-287e19987ed1",
+    "userName" : "김철수",
+    "email" : "cheolsu@yahoo.com",
+    "phoneNum" : "010-7777-7777",
+    "createdAt" : 1737451186622,
     "updatedAt" : 0
   }
 }

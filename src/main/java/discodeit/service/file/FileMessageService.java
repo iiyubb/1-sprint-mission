@@ -25,7 +25,7 @@ public class FileMessageService implements Serializable, MessageService {
     }
 
     @Override
-    public Message create(Message newMessage) {
+    public void create(Message newMessage) {
         String messageId = newMessage.getMessageId();
         String messageDetail = newMessage.getMessageDetail();
         User sendUser = newMessage.getSendUser();
@@ -45,15 +45,14 @@ public class FileMessageService implements Serializable, MessageService {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자에게 메세지를 전송할 수 없습니다.");
         }
 
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         messageData.put(messageId, newMessage);
         FileUtil.save(directory, messageData);
-        return newMessage;
     }
 
     @Override
     public Message readById(String messageId) {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         if (!messageData.containsKey(messageId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
@@ -62,7 +61,7 @@ public class FileMessageService implements Serializable, MessageService {
 
     @Override
     public List<Message> readByChannel(String channelId) {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         List<String> channelList = messageData.values().stream().map(message -> message.getChannel().getChannelId()).toList();
         if (!channelList.contains(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
@@ -72,13 +71,13 @@ public class FileMessageService implements Serializable, MessageService {
 
     @Override
     public List<Message> readAll() {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         return messageData.values().stream().toList();
     }
 
     @Override
     public Message updateMessage(String messageId, Message updateMessage) {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         if (!messageData.containsKey(messageId)) {
             throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
         }
@@ -91,7 +90,7 @@ public class FileMessageService implements Serializable, MessageService {
 
     @Override
     public void delete(String messageId) {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         if (!messageData.containsKey(messageId)) {
             throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
         }
@@ -102,14 +101,14 @@ public class FileMessageService implements Serializable, MessageService {
 
     @Override
     public void deleteByChannel(Channel channel) {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         messageData.values().removeIf(message -> message.getChannel().equals(channel));
         FileUtil.save(directory, messageData);
     }
 
     @Override
     public Channel getChannel(String messageId) {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         if (!messageData.containsKey(messageId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
@@ -118,7 +117,7 @@ public class FileMessageService implements Serializable, MessageService {
 
 
     private boolean isMessageIdDuplicate(String messageId) {
-        Map<String, Message> messageData = FileUtil.load(directory);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         return messageData.containsKey(messageId);
     }
 }

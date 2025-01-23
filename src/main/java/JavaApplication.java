@@ -117,18 +117,19 @@ public class JavaApplication {
         System.out.println("[생성 성공] Channel ID: " + directCh.getChannelId() + " / Channel Name: " + directCh.getChannelName());
 
         // 2.2. 채널에 User 추가
-        codeitCh.addUser(userYB);
-        codeitCh.addUser(userYH);
-        codeitCh.addUser(userCS);
+        System.out.println("\n* Channel에 User 추가");
+        channelService.addUser(codeitCh.getChannelId(), userYB);
+        channelService.addUser(codeitCh.getChannelId(), userYH);
+        channelService.addUser(codeitCh.getChannelId(), userCS);
 
-        groupCh.addUser(userYB);
-        groupCh.addUser(userYH);
+        channelService.addUser(groupCh.getChannelId(), userYB);
+        channelService.addUser(groupCh.getChannelId(), userYH);
 
-        directCh.addUser(userYH);
-        directCh.addUser(userCS);
+        channelService.addUser(directCh.getChannelId(), userYB);
+        channelService.addUser(directCh.getChannelId(), userCS);
 
         // 2.3. 채널 User 확인
-        System.out.println("\nChannel User 확인");
+        System.out.println("\n* Channel User 확인");
         System.out.println("- Codeit Channel User 확인");
         List<User> codeitChUserList = channelService.getUserList(codeitCh.getChannelId());
         codeitChUserList.stream().map(User::getUserName).forEach(System.out::println);
@@ -142,7 +143,7 @@ public class JavaApplication {
         directChUserList.stream().map(User::getUserName).forEach(System.out::println);
 
         // 2.4. 채널 User 삭제
-        System.out.println("\nChannel User 삭제");
+        System.out.println("\n* Channel User 삭제");
         channelService.deleteUser(codeitCh.getChannelId(), userYH);
         System.out.println("- Codeit Channel User 확인");
         List<User> codeitChUserList2 = channelService.getUserList(codeitCh.getChannelId());
@@ -180,60 +181,58 @@ public class JavaApplication {
 
         System.out.println();
         System.out.println();
-        }
-                }
-//
-//
-//        // 3. Message
-//        System.out.println("*** Message Test ***");
-//        System.out.println();
-//
-//        // 3.1. 메세지 생성
-//        System.out.println("* 매세지 생성 확인");
-//        Message message1 = new Message(userYH, userYB, codeitCh, "안녕!!!!!!!");
-//        messageService.create(message1);
-//        System.out.println("[생성 성공] 발신자: " + message1.getSendUser().getUserName() + " -> 수신자: " + message1.getReceiveUser().getUserName() + "\n내용: " + message1.getMessageDetail());
-//
-//        Message message2 = new Message(userYB, userYH, codeitCh, "Hello Hello");
-//        messageService.create(message2);
-//        System.out.println("\n[생성 성공] 발신자: " + message2.getSendUser().getUserName() + " -> 수신자: " + message2.getReceiveUser().getUserName() + "\n내용: " + message2.getMessageDetail());
-//
-//        Message message3 = new Message(userCS, userYH, directCh, "영희야 안녕?");
-//        messageService.create(message3);
-//        System.out.println("\n[생성 성공] 발신자: " + message3.getSendUser().getUserName() + " -> 수신자: " + message3.getReceiveUser().getUserName() + "\n내용: " + message3.getMessageDetail());
-//
-//        // 3.2. 메세지 확인
-//        System.out.println("\n* 메세지 전부 확인");
-//        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
-//
-//        // 3.3. 메세지 채널 확인
-//        System.out.println("\n* 메세지 채널 확인");
-//        System.out.println("- 첫번째 메세지가 전송된 채널: " + messageService.getChannel(message1.getMessageId()).getChannelName());
-//        System.out.println("- 두번째 메세지가 전송된 채널: " + messageService.getChannel(message2.getMessageId()).getChannelName());
-//        System.out.println("- 세번째 메세지가 전송된 채널: " + messageService.getChannel(message3.getMessageId()).getChannelName());
-//
-//        // 3.4. 해당 채널의 모든 메세지 확인
-//        System.out.println("\n* 'Codeit Channel'의 모든 Message 읽기");
-//        List<Message> codeitChMessage = channelService.getMessageList(codeitCh.getChannelId());
-//        codeitChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
-//
-//        System.out.println("\n* 'Direct Channel'의 모든 Message 읽기");
-//        List<Message> directChMessage = channelService.getMessageList(directCh.getChannelId());
-//        directChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
-//
-//        // 3.5. 메세지 수정
-//        System.out.println("\n* 메세지 수정");
-//        Message newMessage = new Message(userYH, userYB, codeitCh, "안녕...");
-//        Message updateMessage = messageService.updateMessage(message1.getMessageId(), newMessage);
-//        System.out.println("수정된 메세지: " + updateMessage.getMessageDetail());
-//
-//        // 3.6. 메세지 삭제
-//        System.out.println("\n* 메세지 삭제");
-//        System.out.println("- 현재 메세지 목록 확인");
-//        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
-//        System.out.println("- '안녕...' 메세지 삭제");
-//        messageService.delete(message1.getMessageId());
-//        System.out.println("- 메세지 목록 확인");
-//        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
-//    }
-//}
+
+
+        // 3. Message
+        System.out.println("*** Message Test ***");
+        System.out.println();
+
+        // 3.1. 메세지 생성
+        System.out.println("* 매세지 생성 확인");
+        Message message1 = new Message(userYH, userYB, codeitCh, "안녕!!!!!!!");
+        messageService.create(message1);
+        System.out.println("[생성 성공] 발신자: " + message1.getSendUser().getUserName() + " -> 수신자: " + message1.getReceiveUser().getUserName() + "\n내용: " + message1.getMessageDetail());
+
+        Message message2 = new Message(userYB, userYH, codeitCh, "Hello Hello");
+        messageService.create(message2);
+        System.out.println("\n[생성 성공] 발신자: " + message2.getSendUser().getUserName() + " -> 수신자: " + message2.getReceiveUser().getUserName() + "\n내용: " + message2.getMessageDetail());
+
+        Message message3 = new Message(userCS, userYH, directCh, "영희야 안녕?");
+        messageService.create(message3);
+        System.out.println("\n[생성 성공] 발신자: " + message3.getSendUser().getUserName() + " -> 수신자: " + message3.getReceiveUser().getUserName() + "\n내용: " + message3.getMessageDetail());
+
+        // 3.2. 메세지 확인
+        System.out.println("\n* 메세지 전부 확인");
+        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
+
+        // 3.3. 메세지 채널 확인
+        System.out.println("\n* 메세지 채널 확인");
+        System.out.println("- 첫번째 메세지가 전송된 채널: " + messageService.getChannel(message1.getMessageId()).getChannelName());
+        System.out.println("- 두번째 메세지가 전송된 채널: " + messageService.getChannel(message2.getMessageId()).getChannelName());
+        System.out.println("- 세번째 메세지가 전송된 채널: " + messageService.getChannel(message3.getMessageId()).getChannelName());
+
+        // 3.4. 해당 채널의 모든 메세지 확인
+        System.out.println("\n* 'Codeit Channel'의 모든 Message 읽기");
+        List<Message> codeitChMessage = channelService.getMessageList(codeitCh.getChannelId());
+        codeitChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
+
+        System.out.println("\n* 'Direct Channel'의 모든 Message 읽기");
+        List<Message> directChMessage = channelService.getMessageList(directCh.getChannelId());
+        directChMessage.stream().map(Message::getMessageDetail).forEach(System.out::println);
+
+        // 3.5. 메세지 수정
+        System.out.println("\n* 메세지 수정");
+        Message newMessage = new Message(userYH, userYB, codeitCh, "안녕...");
+        Message updateMessage = messageService.updateMessage(message1.getMessageId(), newMessage);
+        System.out.println("수정된 메세지: " + updateMessage.getMessageDetail());
+
+        // 3.6. 메세지 삭제
+        System.out.println("\n* 메세지 삭제");
+        System.out.println("- 현재 메세지 목록 확인");
+        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
+        System.out.println("- '안녕...' 메세지 삭제");
+        messageService.delete(message1.getMessageId());
+        System.out.println("- 메세지 목록 확인");
+        messageService.readAll().stream().map(Message::getMessageDetail).forEach(System.out::println);
+    }
+}
