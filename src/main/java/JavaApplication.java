@@ -1,18 +1,32 @@
 import discodeit.entity.Channel;
 import discodeit.entity.Message;
 import discodeit.entity.User;
+import discodeit.factory.JCFServiceFactory;
+import discodeit.factory.ServiceFactory;
+import discodeit.service.file.FileChannelService;
+import discodeit.service.file.FileMessageService;
+import discodeit.service.file.FileUserService;
 import discodeit.service.jcf.JCFChannelService;
 import discodeit.service.jcf.JCFMessageService;
 import discodeit.service.jcf.JCFUserService;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class JavaApplication {
     public static void main(String[] args) {
 
-        JCFUserService userService = new JCFUserService();
-        JCFMessageService messageService = new JCFMessageService();
-        JCFChannelService channelService = new JCFChannelService(userService, messageService);
+        ServiceFactory serviceFactory = new JCFServiceFactory();
+
+        Path userDirectory = Paths.get("src/main/java/discodeit/data/user.json");
+        Path channelDirectory = Paths.get("src/main/java/discodeit/data/channel.json");
+        Path messageDirectory = Paths.get("src/main/java/discodeit/data/message.json");
+
+        FileUserService userService = new FileUserService(userDirectory);
+        FileMessageService messageService = new FileMessageService(messageDirectory);
+        FileChannelService channelService = new FileChannelService(channelDirectory, messageService);
+
 
         // 1. User
         System.out.println("*** User Test ***");
@@ -103,18 +117,19 @@ public class JavaApplication {
         System.out.println("[생성 성공] Channel ID: " + directCh.getChannelId() + " / Channel Name: " + directCh.getChannelName());
 
         // 2.2. 채널에 User 추가
-        codeitCh.addUser(userYB);
-        codeitCh.addUser(userYH);
-        codeitCh.addUser(userCS);
+        System.out.println("\n* Channel에 User 추가");
+        channelService.addUser(codeitCh.getChannelId(), userYB);
+        channelService.addUser(codeitCh.getChannelId(), userYH);
+        channelService.addUser(codeitCh.getChannelId(), userCS);
 
-        groupCh.addUser(userYB);
-        groupCh.addUser(userYH);
+        channelService.addUser(groupCh.getChannelId(), userYB);
+        channelService.addUser(groupCh.getChannelId(), userYH);
 
-        directCh.addUser(userYH);
-        directCh.addUser(userCS);
+        channelService.addUser(directCh.getChannelId(), userYB);
+        channelService.addUser(directCh.getChannelId(), userCS);
 
         // 2.3. 채널 User 확인
-        System.out.println("\nChannel User 확인");
+        System.out.println("\n* Channel User 확인");
         System.out.println("- Codeit Channel User 확인");
         List<User> codeitChUserList = channelService.getUserList(codeitCh.getChannelId());
         codeitChUserList.stream().map(User::getUserName).forEach(System.out::println);
@@ -128,7 +143,7 @@ public class JavaApplication {
         directChUserList.stream().map(User::getUserName).forEach(System.out::println);
 
         // 2.4. 채널 User 삭제
-        System.out.println("\nChannel User 삭제");
+        System.out.println("\n* Channel User 삭제");
         channelService.deleteUser(codeitCh.getChannelId(), userYH);
         System.out.println("- Codeit Channel User 확인");
         List<User> codeitChUserList2 = channelService.getUserList(codeitCh.getChannelId());

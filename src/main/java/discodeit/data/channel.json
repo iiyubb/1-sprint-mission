@@ -1,0 +1,50 @@
+{
+  "4c2fae90-a47d-4ef3-9435-9b460da453ac" : {
+    "channelId" : "4c2fae90-a47d-4ef3-9435-9b460da453ac",
+    "channelName" : "Codeit Mission 1",
+    "createdAt" : 1737451186777,
+    "updatedAt" : 1737451187007,
+    "users" : {
+      "49d710a3-2743-4645-be8f-3f2693249997" : {
+        "userId" : "49d710a3-2743-4645-be8f-3f2693249997",
+        "userName" : "이유빈",
+        "email" : "yubin@gmail.com",
+        "phoneNum" : "010-1234-1234",
+        "createdAt" : 1737451185855,
+        "updatedAt" : 0
+      },
+      "08ad5145-da8c-4759-9f75-287e19987ed1" : {
+        "userId" : "08ad5145-da8c-4759-9f75-287e19987ed1",
+        "userName" : "김철수",
+        "email" : "cheolsu@yahoo.com",
+        "phoneNum" : "010-7777-7777",
+        "createdAt" : 1737451186622,
+        "updatedAt" : 0
+      }
+    }
+  },
+  "0cccf36a-ab7c-4118-9c90-938b6776390f" : {
+    "channelId" : "0cccf36a-ab7c-4118-9c90-938b6776390f",
+    "channelName" : "Direct Channel",
+    "createdAt" : 1737451186820,
+    "updatedAt" : 1737451186917,
+    "users" : {
+      "49d710a3-2743-4645-be8f-3f2693249997" : {
+        "userId" : "49d710a3-2743-4645-be8f-3f2693249997",
+        "userName" : "이유빈",
+        "email" : "yubin@gmail.com",
+        "phoneNum" : "010-1234-1234",
+        "createdAt" : 1737451185855,
+        "updatedAt" : 0
+      },
+      "08ad5145-da8c-4759-9f75-287e19987ed1" : {
+        "userId" : "08ad5145-da8c-4759-9f75-287e19987ed1",
+        "userName" : "김철수",
+        "email" : "cheolsu@yahoo.com",
+        "phoneNum" : "010-7777-7777",
+        "createdAt" : 1737451186622,
+        "updatedAt" : 0
+      }
+    }
+  }
+}
