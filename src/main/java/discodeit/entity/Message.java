@@ -5,7 +5,6 @@ import java.util.UUID;
 public class Message {
     private String messageId;
     private User sendUser;
-    private User receiveUser;
     private String messageDetail;
     private long createdAt;
     private long updatedAt;
@@ -16,10 +15,9 @@ public class Message {
         createdAt = System.currentTimeMillis();
     }
 
-    public Message(User sendUser, User receiveUser, Channel channel, String messageDetail) {
+    public Message(User sendUser, Channel channel, String messageDetail) {
         this();
         this.sendUser = sendUser;
-        this.receiveUser = receiveUser;
         this.messageDetail = messageDetail;
         this.channel = channel;
     }
@@ -31,10 +29,6 @@ public class Message {
 
     public User getSendUser() {
         return sendUser;
-    }
-
-    public User getReceiveUser() {
-        return receiveUser;
     }
 
     public Channel getChannel() {
