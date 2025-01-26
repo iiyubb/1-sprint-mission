@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static discodeit.service.jcf.JCFChannelService.isChannelIdDuplicate;
+
 public class JCFMessageService implements MessageService {
     private Map<String, Message> messageData = new HashMap<>();
 
@@ -63,15 +65,21 @@ public class JCFMessageService implements MessageService {
 
     @Override
     public Message readById(String messageId) {
-        if (!messageData.containsKey(messageId)) {
+        Message message = messageData.get(messageId);
+        if (message == null) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
-        return messageData.get(messageId);
+        return message;
     }
 
     @Override
     public List<Message> readByChannel(String channelId) {
-        List<Message> messages = messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
+        List<Message> messages;
+        if (!isChannelIdDuplicate(channelId)) {
+            messages = messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
+        } else {
+            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
+        }
         return messages;
     }
 
