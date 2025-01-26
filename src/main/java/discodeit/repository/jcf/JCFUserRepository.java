@@ -1,7 +1,7 @@
-package discodeit.service.repository.jcf;
+package discodeit.repository.jcf;
 
 import discodeit.entity.User;
-import discodeit.service.repository.UserRepository;
+import discodeit.repository.UserRepository;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,7 +1,7 @@
-package discodeit.service.repository.jcf;
+package discodeit.repository.jcf;
 
 import discodeit.entity.Channel;
-import discodeit.service.repository.ChannelRepository;
+import discodeit.repository.ChannelRepository;
 
 import java.util.HashMap;
 import java.util.Map;

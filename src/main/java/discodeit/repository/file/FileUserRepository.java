@@ -1,10 +1,9 @@
-package discodeit.service.repository.file;
+package discodeit.repository.file;
 
 import discodeit.entity.User;
-import discodeit.service.repository.UserRepository;
+import discodeit.repository.UserRepository;
 import discodeit.utils.FileUtil;
 
-import java.io.File;
 import java.nio.file.*;
 import java.util.Map;
 

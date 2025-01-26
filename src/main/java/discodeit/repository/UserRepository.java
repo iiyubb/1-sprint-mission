@@ -1,4 +1,4 @@
-package discodeit.service.repository;
+package discodeit.repository;
 
 import discodeit.entity.User;
 

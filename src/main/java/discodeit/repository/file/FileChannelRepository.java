@@ -1,7 +1,7 @@
-package discodeit.service.repository.file;
+package discodeit.repository.file;
 
 import discodeit.entity.Channel;
-import discodeit.service.repository.ChannelRepository;
+import discodeit.repository.ChannelRepository;
 import discodeit.utils.FileUtil;
 
 import java.nio.file.Path;
