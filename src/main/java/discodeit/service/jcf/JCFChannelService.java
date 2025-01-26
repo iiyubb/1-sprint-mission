@@ -102,11 +102,6 @@ public class JCFChannelService implements ChannelService {
     }
 
     @Override
-    public List<Message> getMessageList(String channelId) {
-        return messageService.readByChannel(channelId);
-    }
-
-    @Override
     public void deleteUser(String channelId, User user) {
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
@@ -130,7 +125,7 @@ public class JCFChannelService implements ChannelService {
     }
 
     private boolean isUserDuplicate(Channel channel, String userId) {
-        return channel.getUser(userId).getUserId().equals(userId);
+        return channel.getUser(userId) != null;
     }
 
 }
