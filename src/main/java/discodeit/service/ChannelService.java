@@ -13,8 +13,6 @@ public interface ChannelService {
 
     List<Channel> readAll();
 
-    List<Message> getMessageList(String channelId);
-
     Channel update(String channelId, Channel updateChannel);
 
     void deleteChannel(String channelId);
