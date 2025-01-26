@@ -1,14 +1,18 @@
 package discodeit.factory;
 
+import discodeit.service.ChannelService;
+import discodeit.service.MessageService;
+import discodeit.service.UserService;
+
 import discodeit.service.jcf.JCFChannelService;
 import discodeit.service.jcf.JCFMessageService;
 import discodeit.service.jcf.JCFUserService;
 
 public class JCFServiceFactory implements ServiceFactory {
 
-    private JCFUserService userService;
-    private JCFChannelService channelService;
-    private JCFMessageService messageService;
+    private UserService userService;
+    private ChannelService channelService;
+    private MessageService messageService;
 
     public JCFServiceFactory() {
         this.userService = createUserService();
@@ -17,7 +21,7 @@ public class JCFServiceFactory implements ServiceFactory {
     }
 
     @Override
-    public JCFUserService createUserService() {
+    public UserService createUserService() {
         if (userService == null) {
             userService = new JCFUserService();
         }
@@ -25,7 +29,7 @@ public class JCFServiceFactory implements ServiceFactory {
     }
 
     @Override
-    public JCFMessageService createMessageService() {
+    public MessageService createMessageService() {
         if (messageService == null) {
             messageService = new JCFMessageService();
         }
@@ -33,7 +37,7 @@ public class JCFServiceFactory implements ServiceFactory {
     }
 
     @Override
-    public JCFChannelService createChannelService() {
+    public ChannelService createChannelService() {
         if (channelService == null) {
             channelService = new JCFChannelService(messageService);
         }
