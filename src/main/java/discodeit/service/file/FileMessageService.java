@@ -29,7 +29,7 @@ public class FileMessageService implements Serializable, MessageService {
         String messageId = newMessage.getMessageId();
         String messageDetail = newMessage.getMessageDetail();
         User sendUser = newMessage.getSendUser();
-        User receiveUser = newMessage.getReceiveUser();
+        Channel channel = newMessage.getChannel();
 
         // 예외처리
         if (isMessageIdDuplicate(messageId)) {
@@ -41,8 +41,8 @@ public class FileMessageService implements Serializable, MessageService {
         if (sendUser.getUserId() == null || sendUser.getUserId().isEmpty()) {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
         }
-        if (receiveUser.getUserId() == null || receiveUser.getUserId().isEmpty()) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 사용자에게 메세지를 전송할 수 없습니다.");
+        if (channel.getChannelId() == null || channel.getChannelId().isEmpty()) {
+            throw new IllegalArgumentException("[error] 존재하지 않는 채널에서 메세지를 전송할 수 없습니다.");
         }
 
         Map<String, Message> messageData = FileUtil.load(directory, Message.class);

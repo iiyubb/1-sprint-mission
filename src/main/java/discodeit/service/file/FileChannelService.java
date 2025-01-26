@@ -118,11 +118,6 @@ public class FileChannelService implements Serializable, ChannelService {
     }
 
     @Override
-    public List<Message> getMessageList(String channelId) {
-        return messageService.readByChannel(channelId);
-    }
-
-    @Override
     public void deleteUser(String channelId, User user) {
         Map<String, Channel> channelData = FileUtil.load(directory, Channel.class);
 
