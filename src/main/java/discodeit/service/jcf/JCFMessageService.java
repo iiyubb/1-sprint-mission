@@ -14,7 +14,7 @@ public class JCFMessageService implements MessageService {
     private Map<String, Message> messageData = new HashMap<>();
 
     @Override
-    public void create(Message newMessage) {
+    public void createDirectMessage(Message newMessage) {
         String messageId = newMessage.getMessageId();
         String messageDetail = newMessage.getMessageDetail();
         User sendUser = newMessage.getSendUser();
@@ -32,6 +32,30 @@ public class JCFMessageService implements MessageService {
         }
         if (receiveUser.getUserId() == null || receiveUser.getUserId().isEmpty()) {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자에게 메세지를 전송할 수 없습니다.");
+        }
+
+        messageData.put(messageId, newMessage);
+    }
+
+    @Override
+    public void createGroupMessage(Message newMessage) {
+        String messageId = newMessage.getMessageId();
+        String messageDetail = newMessage.getMessageDetail();
+        User sendUser = newMessage.getSendUser();
+        Channel channel = newMessage.getChannel();
+
+        // 예외처리
+        if (isMessageIdDuplicate(messageId)) {
+            throw new IllegalArgumentException("[error] 이미 존재하는 메세지 ID입니다.");
+        }
+        if (messageDetail == null || messageDetail.isEmpty()) {
+            throw new IllegalArgumentException("[error] 유효하지 않은 메세지 형식입니다.");
+        }
+        if (sendUser.getUserId() == null || sendUser.getUserId().isEmpty()) {
+            throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
+        }
+        if (channel.getChannelId() == null || channel.getChannelId().isEmpty()) {
+            throw new IllegalArgumentException("[error] 존재하지 않는 채널에서 메세지를 전송할 수 없습니다.");
         }
 
         messageData.put(messageId, newMessage);
