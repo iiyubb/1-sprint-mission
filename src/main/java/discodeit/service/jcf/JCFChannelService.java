@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public class JCFChannelService implements ChannelService {
-    private Map<String, Channel> channelData;
+    private static Map<String, Channel> channelData;
     private MessageService messageService;
 
     public JCFChannelService(MessageService messageService) {
@@ -116,7 +116,7 @@ public class JCFChannelService implements ChannelService {
     }
 
 
-    private boolean isChannelIdDuplicate(String channelId) {
+    public static boolean isChannelIdDuplicate(String channelId) {
         return channelData.containsKey(channelId);
     }
 
