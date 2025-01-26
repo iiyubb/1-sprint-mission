@@ -2,9 +2,8 @@ package discodeit.service.basic;
 
 import discodeit.entity.User;
 import discodeit.service.UserService;
-import discodeit.service.repository.UserRepository;
+import discodeit.repository.UserRepository;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +13,7 @@ public class BasicUserService implements UserService {
     public BasicUserService() {
 
     }
+
     public BasicUserService(UserRepository userRepo) {
         this.userRepo = userRepo;
     }

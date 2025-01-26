@@ -1,13 +1,10 @@
 package discodeit.service.basic;
 
 import discodeit.entity.Channel;
-import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.service.ChannelService;
 import discodeit.service.MessageService;
-import discodeit.service.repository.ChannelRepository;
-import discodeit.service.repository.MessageRepository;
-import discodeit.utils.FileUtil;
+import discodeit.repository.ChannelRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -106,11 +103,6 @@ public class BasicChannelService implements ChannelService {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
         return channelRepo.loadById(channelId).getUsers().values().stream().toList();
-    }
-
-    @Override
-    public List<Message> getMessageList(String channelId) {
-        return messageService.readByChannel(channelId);
     }
 
     @Override

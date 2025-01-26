@@ -4,7 +4,7 @@ import discodeit.entity.Channel;
 import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.service.MessageService;
-import discodeit.service.repository.MessageRepository;
+import discodeit.repository.MessageRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -21,31 +21,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public void createDirectMessage(Message newMessage) {
-        String messageId = newMessage.getMessageId();
-        String messageDetail = newMessage.getMessageDetail();
-        User sendUser = newMessage.getSendUser();
-        User receiveUser = newMessage.getReceiveUser();
-
-        // 예외처리
-        if (isMessageIdDuplicate(messageId)) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 메세지 ID입니다.");
-        }
-        if (messageDetail == null || messageDetail.isEmpty()) {
-            throw new IllegalArgumentException("[error] 유효하지 않은 메세지 형식입니다.");
-        }
-        if (sendUser.getUserId() == null || sendUser.getUserId().isEmpty()) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
-        }
-        if (receiveUser.getUserId() == null || receiveUser.getUserId().isEmpty()) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 사용자에게 메세지를 전송할 수 없습니다.");
-        }
-
-        messageRepo.save(newMessage);
-    }
-
-    @Override
-    public void createGroupMessage(Message newMessage) {
+    public void create(Message newMessage) {
         String messageId = newMessage.getMessageId();
         String messageDetail = newMessage.getMessageDetail();
         User sendUser = newMessage.getSendUser();
@@ -62,7 +38,7 @@ public class BasicMessageService implements MessageService {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
         }
         if (channel.getChannelId() == null || channel.getChannelId().isEmpty()) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널에 메세지를 전송할 수 없습니다.");
+            throw new IllegalArgumentException("[error] 존재하지 않는 채널에서 메세지를 전송할 수 없습니다.");
         }
 
         messageRepo.save(newMessage);
