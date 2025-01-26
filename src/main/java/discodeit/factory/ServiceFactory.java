@@ -1,13 +1,13 @@
 package discodeit.factory;
 
-import discodeit.service.jcf.JCFChannelService;
-import discodeit.service.jcf.JCFMessageService;
-import discodeit.service.jcf.JCFUserService;
+import discodeit.service.ChannelService;
+import discodeit.service.MessageService;
+import discodeit.service.UserService;
 
 public interface ServiceFactory {
-    JCFUserService createUserService();
+    UserService createUserService();
 
-    JCFChannelService createChannelService();
+    ChannelService createChannelService();
 
-    JCFMessageService createMessageService();
+    MessageService createMessageService();
 }
