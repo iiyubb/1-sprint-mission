@@ -6,7 +6,9 @@ import discodeit.entity.Message;
 import java.util.List;
 
 public interface MessageService {
-    void create(Message newMessage);
+    void createDirectMessage(Message newMessage);
+
+    void createGroupMessage(Message newMessage);
 
     Message readById(String messageId);
 
