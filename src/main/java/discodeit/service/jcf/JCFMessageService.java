@@ -71,11 +71,8 @@ public class JCFMessageService implements MessageService {
 
     @Override
     public List<Message> readByChannel(String channelId) {
-        List<String> channelList = messageData.values().stream().map(message -> message.getChannel().getChannelId()).toList();
-        if (!channelList.contains(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-        return messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
+        List<Message> messages = messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
+        return messages;
     }
 
     @Override
