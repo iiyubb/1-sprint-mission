@@ -1,21 +1,23 @@
-package discodeit.service.jcf;
+package discodeit.service.basic;
 
 import discodeit.entity.Channel;
-import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.service.ChannelService;
 import discodeit.service.MessageService;
+import discodeit.repository.ChannelRepository;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JCFChannelService implements ChannelService {
-    private static Map<String, Channel> channelData;
+public class BasicChannelService implements ChannelService {
+    private ChannelRepository channelRepo;
     private MessageService messageService;
 
-    public JCFChannelService(MessageService messageService) {
-        channelData = new HashMap<>();
+    public BasicChannelService() {
+    }
+
+    public BasicChannelService(ChannelRepository channelRepo, MessageService messageService) {
+        this.channelRepo = channelRepo;
         this.messageService = messageService;
     }
 
@@ -34,24 +36,25 @@ public class JCFChannelService implements ChannelService {
             throw new IllegalArgumentException("[error] 이미 존재하는 채널 이름입니다.");
         }
 
-        channelData.put(channelId, newChannel);
+        channelRepo.save(newChannel);
     }
 
     @Override
     public Channel readById(String channelId) {
-        if (!channelData.containsKey(channelId)) {
+        if (!channelRepo.loadAll().containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
-        return channelData.get(channelId);
+        return channelRepo.loadById(channelId);
     }
 
     @Override
     public List<Channel> readAll() {
-        return channelData.values().stream().toList();
+        return channelRepo.loadAll().values().stream().toList();
     }
 
     @Override
     public Channel update(String channelId, Channel updateChannel) {
+        Map<String, Channel> channelData = channelRepo.loadAll();
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
@@ -62,11 +65,13 @@ public class JCFChannelService implements ChannelService {
         }
 
         originChannel.updateChannelName(updateChannel.getChannelName());
+        channelRepo.save(originChannel);
         return originChannel;
     }
 
     @Override
     public void deleteChannel(String channelId) {
+        Map<String, Channel> channelData = channelRepo.loadAll();
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
@@ -74,35 +79,36 @@ public class JCFChannelService implements ChannelService {
         channelData.remove(channelId);
         System.out.println("[삭제 완료]");
         messageService.deleteByChannel(channelData.get(channelId));
+        channelRepo.delete(channelRepo.loadById(channelId));
     }
 
     @Override
     public void addUser(String channelId, User user) {
-        if (!channelData.containsKey(channelId)) {
+        if (!channelRepo.loadAll().containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
 
-        Channel channel = channelData.get(channelId);
-
+        Channel channel = channelRepo.loadById(channelId);
         if (isUserDuplicate(channel, user.getUserId())) {
             throw new IllegalArgumentException("[error] 이미 존재하는 user입니다.");
         }
         channel.addUser(user);
         System.out.println("[User 추가 성공]");
+        channelRepo.save(channel);
     }
 
     @Override
     public List<User> getUserList(String channelId) {
-        if (!channelData.containsKey(channelId)) {
+        if (!channelRepo.loadAll().containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
-
-        Channel channel = channelData.get(channelId);
-        return channel.getUsers().values().stream().toList();
+        return channelRepo.loadById(channelId).getUsers().values().stream().toList();
     }
 
     @Override
     public void deleteUser(String channelId, User user) {
+        Map<String, Channel> channelData = channelRepo.loadAll();
+
         if (!channelData.containsKey(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
@@ -113,19 +119,25 @@ public class JCFChannelService implements ChannelService {
         }
         channel.getUsers().remove(user.getUserId());
         System.out.println("[User 삭제 완료]");
+        channelRepo.save(channel);
     }
 
 
-    public static boolean isChannelIdDuplicate(String channelId) {
+    private boolean isChannelIdDuplicate(String channelId) {
+        Map<String, Channel> channelData = channelRepo.loadAll();
         return channelData.containsKey(channelId);
     }
 
     private boolean isChannelNameDuplicate(String channelName) {
+        Map<String, Channel> channelData = channelRepo.loadAll();
         return channelData.values().stream().anyMatch(channel -> channel.getChannelName().equals(channelName));
     }
 
     private boolean isUserDuplicate(Channel channel, String userId) {
-        return channel.getUser(userId) != null;
+        if (channel.getUser(userId) == null) {
+            return false;
+        } else {
+            return channel.getUser(userId).getUserId().equals(userId);
+        }
     }
-
 }

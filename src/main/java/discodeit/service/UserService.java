@@ -5,7 +5,7 @@ import discodeit.entity.User;
 import java.util.List;
 
 public interface UserService {
-    User create(User newUser);
+    void create(User newUser);
 
     User readById(String userId);
 

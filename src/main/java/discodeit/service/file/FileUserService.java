@@ -1,15 +1,23 @@
-package discodeit.service.jcf;
+package discodeit.service.file;
 
 import discodeit.entity.User;
 import discodeit.service.UserService;
+import discodeit.utils.FileUtil;
 
-import java.util.HashMap;
+import java.io.*;
+import java.nio.file.*;
 import java.util.List;
 import java.util.Map;
 
-public class JCFUserService implements UserService {
-    private Map<String, User> userData = new HashMap<>();
 
+public class FileUserService implements Serializable, UserService {
+    private static final long serialVersionUID = 1L;
+    private final Path directory;
+
+    public FileUserService(Path directory) {
+        this.directory = directory;
+        FileUtil.init(directory);
+    }
 
     @Override
     public void create(User newUser) {
@@ -35,11 +43,14 @@ public class JCFUserService implements UserService {
             throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
         }
 
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         userData.put(userId, newUser);
+        FileUtil.save(directory, userData);
     }
 
     @Override
     public User readById(String userId) {
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         if (!userData.containsKey(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
@@ -48,11 +59,13 @@ public class JCFUserService implements UserService {
 
     @Override
     public List<User> readAll() {
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.values().stream().toList();
     }
 
     @Override
     public User update(String userId, User updateUser) {
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         if (!userData.containsKey(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
@@ -74,29 +87,35 @@ public class JCFUserService implements UserService {
 
         originUser.updatePhoneNum(updateUser.getPhoneNum());
         originUser.updateEmail(updateUser.getEmail());
+        FileUtil.save(directory, userData);
         return originUser;
     }
 
     @Override
     public void delete(String userId) {
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         if (!userData.containsKey(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
 
         userData.remove(userId);
+        FileUtil.save(directory, userData);
         System.out.println("[삭제 완료]");
     }
 
-
+    // 확인
     private boolean isUserIdDuplicate(String userId) {
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.containsKey(userId);
     }
 
     private boolean isPhoneNumDuplicate(String phoneNum) {
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.values().stream().anyMatch(user -> user.getPhoneNum().equals(phoneNum));
     }
 
     private boolean isEmailDuplicate(String email) {
+        Map<String, User> userData = FileUtil.load(directory, User.class);
         return userData.values().stream().anyMatch(user -> user.getEmail().equals(email));
     }
 
@@ -109,4 +128,5 @@ public class JCFUserService implements UserService {
         String emailRegExp = "\\w+@\\w+\\.\\w+(\\.\\w+)?";
         return !email.matches(emailRegExp);
     }
+
 }

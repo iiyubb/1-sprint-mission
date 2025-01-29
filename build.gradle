@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'checkstyle'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 group = 'com.sprint.mission'
@@ -13,6 +14,8 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.0.1"
 }
 
 test {
@@ -30,4 +33,12 @@ tasks.withType(Checkstyle) {
         html.required = true // HTML 보고서 생성
         xml.required = false // XML 보고서는 비활성화
     }
+}
+kotlin {
+    jvmToolchain(17)
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }

@@ -1,15 +1,22 @@
-package discodeit.service.jcf;
+package discodeit.service.basic;
 
 import discodeit.entity.User;
 import discodeit.service.UserService;
+import discodeit.repository.UserRepository;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JCFUserService implements UserService {
-    private Map<String, User> userData = new HashMap<>();
+public class BasicUserService implements UserService {
+    private UserRepository userRepo;
 
+    public BasicUserService() {
+
+    }
+
+    public BasicUserService(UserRepository userRepo) {
+        this.userRepo = userRepo;
+    }
 
     @Override
     public void create(User newUser) {
@@ -35,24 +42,26 @@ public class JCFUserService implements UserService {
             throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
         }
 
-        userData.put(userId, newUser);
+        userRepo.save(newUser);
     }
 
     @Override
     public User readById(String userId) {
-        if (!userData.containsKey(userId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
+        if (!userRepo.loadAll().containsKey(userId)) {
+            throw new IllegalArgumentException("[error] 존재하지 않는 유저 ID입니다.");
         }
-        return userData.get(userId);
+        return userRepo.loadById(userId);
     }
 
     @Override
     public List<User> readAll() {
-        return userData.values().stream().toList();
+        return userRepo.loadAll().values().stream().toList();
     }
 
     @Override
     public User update(String userId, User updateUser) {
+        Map<String, User> userData = userRepo.loadAll();
+
         if (!userData.containsKey(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
         }
@@ -74,30 +83,29 @@ public class JCFUserService implements UserService {
 
         originUser.updatePhoneNum(updateUser.getPhoneNum());
         originUser.updateEmail(updateUser.getEmail());
+        userRepo.save(originUser);
         return originUser;
     }
 
     @Override
     public void delete(String userId) {
-        if (!userData.containsKey(userId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 user ID입니다.");
-        }
-
-        userData.remove(userId);
+        userRepo.delete(userRepo.loadById(userId));
         System.out.println("[삭제 완료]");
     }
 
-
+    // 확인
+    // 이렇게 매번 예외처리를 할때마다 loadAll로 repository를 읽어오는 게 맞는지,
+    // 생성자에서 loadAll을 통해 읽어서 userData map에 저장하는 게 나을지 고민
     private boolean isUserIdDuplicate(String userId) {
-        return userData.containsKey(userId);
+        return userRepo.loadAll().containsKey(userId);
     }
 
     private boolean isPhoneNumDuplicate(String phoneNum) {
-        return userData.values().stream().anyMatch(user -> user.getPhoneNum().equals(phoneNum));
+        return userRepo.loadAll().values().stream().anyMatch(user -> user.getPhoneNum().equals(phoneNum));
     }
 
     private boolean isEmailDuplicate(String email) {
-        return userData.values().stream().anyMatch(user -> user.getEmail().equals(email));
+        return userRepo.loadAll().values().stream().anyMatch(user -> user.getEmail().equals(email));
     }
 
     private boolean isValidPhoneNum(String phoneNum) {
@@ -109,4 +117,5 @@ public class JCFUserService implements UserService {
         String emailRegExp = "\\w+@\\w+\\.\\w+(\\.\\w+)?";
         return !email.matches(emailRegExp);
     }
+
 }
