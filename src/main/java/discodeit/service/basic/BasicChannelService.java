@@ -41,10 +41,11 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public Channel readById(String channelId) {
-        if (!channelRepo.loadAll().containsKey(channelId)) {
+        try {
+            return channelRepo.loadById(channelId);
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
-        return channelRepo.loadById(channelId);
     }
 
     @Override
@@ -134,10 +135,6 @@ public class BasicChannelService implements ChannelService {
     }
 
     private boolean isUserDuplicate(Channel channel, String userId) {
-        if (channel.getUser(userId) == null) {
-            return false;
-        } else {
-            return channel.getUser(userId).getUserId().equals(userId);
-        }
+        return channel.getUser(userId) != null;
     }
 }
