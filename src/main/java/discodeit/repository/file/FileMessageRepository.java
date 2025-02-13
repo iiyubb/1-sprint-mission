@@ -11,7 +11,7 @@ public class FileMessageRepository implements MessageRepository {
     private Map<String, Message> messageData;
     private Path path;
 
-    public FileMessageRepository() {
+    protected FileMessageRepository() {
     }
 
     public FileMessageRepository(Path path) {
