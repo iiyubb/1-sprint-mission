@@ -12,7 +12,7 @@ public class FileUserRepository implements UserRepository {
     private Map<String, User> userData;
     private Path path;
 
-    public FileUserRepository() {
+    protected FileUserRepository() {
     }
 
     public FileUserRepository(Path path) {
