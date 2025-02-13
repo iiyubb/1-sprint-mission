@@ -34,6 +34,7 @@ public class BasicMessageService implements MessageService {
         if (messageDetail == null || messageDetail.isEmpty()) {
             throw new IllegalArgumentException("[error] 유효하지 않은 메세지 형식입니다.");
         }
+        // TODO: userId를 통해서 실제 사용자가 존재하는지 안하는지 확인
         if (sendUser.getUserId() == null || sendUser.getUserId().isEmpty()) {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
         }
