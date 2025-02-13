@@ -11,8 +11,7 @@ public class FileChannelRepository implements ChannelRepository {
     private Map<String, Channel> channelData;
     private Path path;
 
-    public FileChannelRepository() {
-
+    protected FileChannelRepository() {
     }
 
     public FileChannelRepository(Path path) {
