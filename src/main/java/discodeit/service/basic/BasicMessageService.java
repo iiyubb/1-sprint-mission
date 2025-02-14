@@ -1,19 +1,24 @@
-package discodeit.service.jcf;
+package discodeit.service.basic;
 
 import discodeit.entity.Channel;
 import discodeit.entity.Message;
 import discodeit.entity.User;
 import discodeit.service.MessageService;
+import discodeit.repository.MessageRepository;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static discodeit.service.jcf.JCFChannelService.isChannelIdDuplicate;
+public class BasicMessageService implements MessageService {
+    private MessageRepository messageRepo;
 
-public class JCFMessageService implements MessageService {
-    private Map<String, Message> messageData = new HashMap<>();
+    public BasicMessageService() {
+    }
+
+    public BasicMessageService(MessageRepository messageRepo) {
+        this.messageRepo = messageRepo;
+    }
 
     @Override
     public void create(Message newMessage) {
@@ -29,6 +34,7 @@ public class JCFMessageService implements MessageService {
         if (messageDetail == null || messageDetail.isEmpty()) {
             throw new IllegalArgumentException("[error] 유효하지 않은 메세지 형식입니다.");
         }
+        // TODO: userId를 통해서 실제 사용자가 존재하는지 안하는지 확인
         if (sendUser.getUserId() == null || sendUser.getUserId().isEmpty()) {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
         }
@@ -36,61 +42,64 @@ public class JCFMessageService implements MessageService {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널에서 메세지를 전송할 수 없습니다.");
         }
 
-        messageData.put(messageId, newMessage);
+        messageRepo.save(newMessage);
     }
 
     @Override
     public Message readById(String messageId) {
-        Message message = messageData.get(messageId);
-        if (message == null) {
+        Map<String, Message> messageData = messageRepo.loadAll();
+        if (!messageData.containsKey(messageId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
-        return message;
+        return messageData.get(messageId);
     }
 
     @Override
     public List<Message> readByChannel(String channelId) {
-        List<Message> messages;
-        if (!isChannelIdDuplicate(channelId)) {
-            messages = messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
-        } else {
+        Map<String, Message> messageData = messageRepo.loadAll();
+        List<String> channelList = messageData.values().stream().map(m -> m.getChannel().getChannelId()).toList();
+        if (!channelList.contains(channelId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
         }
-        return messages;
+        return messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
     }
 
     @Override
     public List<Message> readAll() {
-        return messageData.values().stream().toList();
+        return messageRepo.loadAll().values().stream().toList();
     }
 
     @Override
     public Message updateMessage(String messageId, Message updateMessage) {
+        Map<String, Message> messageData = messageRepo.loadAll();
         if (!messageData.containsKey(messageId)) {
             throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
         }
         Message originMessage = messageData.get(messageId);
 
         originMessage.updateMessageDetail(updateMessage.getMessageDetail());
+        messageRepo.save(originMessage);
         return originMessage;
     }
 
     @Override
     public void delete(String messageId) {
+        Map<String, Message> messageData = messageRepo.loadAll();
         if (!messageData.containsKey(messageId)) {
             throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
         }
-        messageData.remove(messageId);
+        messageRepo.delete(messageRepo.loadById(messageId));
         System.out.println("[삭제 완료]");
     }
 
     @Override
     public void deleteByChannel(Channel channel) {
-        messageData.values().removeIf(message -> message.getChannel().equals(channel));
+        messageRepo.loadAll().values().removeIf(m -> m.getChannel().equals(channel));
     }
 
     @Override
     public Channel getChannel(String messageId) {
+        Map<String, Message> messageData = messageRepo.loadAll();
         if (!messageData.containsKey(messageId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
@@ -99,7 +108,6 @@ public class JCFMessageService implements MessageService {
 
 
     private boolean isMessageIdDuplicate(String messageId) {
-        return messageData.containsKey(messageId);
+        return messageRepo.loadAll().containsKey(messageId);
     }
-
 }

@@ -7,13 +7,11 @@ import discodeit.entity.User;
 import java.util.List;
 
 public interface ChannelService {
-    Channel create(Channel newChannel);
+    void create(Channel newChannel);
 
     Channel readById(String channelId);
 
     List<Channel> readAll();
-
-    List<Message> getMessageList(String channelId);
 
     Channel update(String channelId, Channel updateChannel);
 
