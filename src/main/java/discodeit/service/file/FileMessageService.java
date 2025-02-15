@@ -10,9 +10,7 @@ import discodeit.utils.FileUtil;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FileMessageService implements Serializable, MessageService {
@@ -25,101 +23,67 @@ public class FileMessageService implements Serializable, MessageService {
     }
 
     @Override
-    public void create(Message newMessage) {
-        String messageId = newMessage.getMessageId();
-        String messageDetail = newMessage.getMessageDetail();
-        User sendUser = newMessage.getSendUser();
-        Channel channel = newMessage.getChannel();
+    public Message create(User sendUser, Channel channel, String messageDetail) {
+        Message message = new Message(sendUser, channel, messageDetail);
+        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
 
         // 예외처리
-        if (isMessageIdDuplicate(messageId)) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 메세지 ID입니다.");
-        }
-        if (messageDetail == null || messageDetail.isEmpty()) {
+        if (messageDetail == null || messageDetail.isBlank()) {
             throw new IllegalArgumentException("[error] 유효하지 않은 메세지 형식입니다.");
         }
-        if (sendUser.getUserId() == null || sendUser.getUserId().isEmpty()) {
+        if (sendUser.getId() == null || sendUser.getId().equals(new UUID(0L, 0L))) {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
         }
-        if (channel.getChannelId() == null || channel.getChannelId().isEmpty()) {
+        if (channel.getId() == null || channel.getId().equals(new UUID(0L, 0L))) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널에서 메세지를 전송할 수 없습니다.");
         }
 
-        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        messageData.put(messageId, newMessage);
+        messageData.put(message.getId().toString(), message);
         FileUtil.save(directory, messageData);
+        return message;
     }
 
     @Override
-    public Message readById(String messageId) {
+    public Message find(UUID messageId) {
         Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        if (!messageData.containsKey(messageId)) {
+        try {
+            return messageData.get(messageId.toString());
+        } catch(Exception e) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
-        return messageData.get(messageId);
     }
 
     @Override
-    public List<Message> readByChannel(String channelId) {
-        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        List<String> channelList = messageData.values().stream().map(message -> message.getChannel().getChannelId()).toList();
-        if (!channelList.contains(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-        return messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Message> readAll() {
+    public List<Message> findAll() {
         Map<String, Message> messageData = FileUtil.load(directory, Message.class);
         return messageData.values().stream().toList();
     }
 
     @Override
-    public Message updateMessage(String messageId, Message updateMessage) {
+    public Message update(UUID messageId, String newDetail) {
         Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        if (!messageData.containsKey(messageId)) {
-            throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
-        }
-        Message originMessage = messageData.get(messageId);
 
-        originMessage.updateMessageDetail(updateMessage.getMessageDetail());
+        if (!messageData.containsKey(messageId.toString())) {
+            throw new NoSuchElementException("[error] 존재하지 않는 메세지 ID입니다.");
+        }
+        Message message = messageData.get(messageId.toString());
+
+        if (newDetail == null || newDetail.isBlank()) {
+            throw new IllegalArgumentException("[error] 빈 메세지는 전송할 수 없습니다");
+        }
+        message.update(newDetail);
+        messageData.put(messageId.toString(), message);
         FileUtil.save(directory, messageData);
-        return originMessage;
+        return message;
     }
 
     @Override
-    public void delete(String messageId) {
+    public void delete(UUID messageId) {
         Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        if (!messageData.containsKey(messageId)) {
-            throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
-        }
-        messageData.remove(messageId);
+
+        messageData.remove(messageId.toString());
+        FileUtil.save(directory, messageData);
         System.out.println("[삭제 완료]");
-        FileUtil.save(directory, messageData);
     }
 
-    @Override
-    public void deleteByChannel(Channel channel) {
-        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        messageData.values().removeIf(message -> message.getChannel().equals(channel));
-        FileUtil.save(directory, messageData);
-    }
-
-    @Override
-    public Channel getChannel(String messageId) {
-        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        if (!messageData.containsKey(messageId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
-        }
-        return messageData.get(messageId).getChannel();
-    }
-
-
-    private boolean isMessageIdDuplicate(String messageId) {
-        Map<String, Message> messageData = FileUtil.load(directory, Message.class);
-        return messageData.containsKey(messageId);
-    }
 }
-
-

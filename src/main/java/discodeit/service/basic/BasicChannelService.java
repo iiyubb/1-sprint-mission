@@ -1,96 +1,67 @@
 package discodeit.service.basic;
 
 import discodeit.entity.Channel;
+import discodeit.entity.ChannelType;
 import discodeit.entity.User;
+import discodeit.repository.UserRepository;
 import discodeit.service.ChannelService;
-import discodeit.service.MessageService;
 import discodeit.repository.ChannelRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class BasicChannelService implements ChannelService {
-    private ChannelRepository channelRepo;
-    private MessageService messageService;
+    private final ChannelRepository channelRepo;
+    private final UserRepository userRepo;
 
-    public BasicChannelService() {
-    }
-
-    public BasicChannelService(ChannelRepository channelRepo, MessageService messageService) {
-        this.channelRepo = channelRepo;
-        this.messageService = messageService;
+    @Override
+    public Channel create(String name, ChannelType type, String description) {
+        Channel channel = new Channel(name, type, description);
+        return channelRepo.save(channel);
     }
 
     @Override
-    public void create(Channel newChannel) {
-        String channelId = newChannel.getChannelId();
-        String channelName = newChannel.getChannelName();
+    public Channel find(UUID channelId) {
+        return channelRepo.findById(channelId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 채널 ID입니다."));
+    }
 
-        if (isChannelIdDuplicate(channelId)) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 채널 ID입니다.");
-        }
-        if (channelName == null || channelName.isEmpty()) {
-            throw new IllegalArgumentException("[error] 유효하지 않은 채널 이름입니다.");
-        }
-        if (isChannelNameDuplicate(channelName)) {
+    @Override
+    public List<Channel> findAll() {
+        return channelRepo.findAll();
+    }
+
+    @Override
+    public Channel update(UUID channelId, String newName, String newDescription) {
+        Channel channel = channelRepo.findById(channelId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 채널 ID입니다."));
+
+        if (isChannelNameDuplicate(newName)) {
             throw new IllegalArgumentException("[error] 이미 존재하는 채널 이름입니다.");
         }
 
-        channelRepo.save(newChannel);
+        channel.update(newName, newDescription);
+        return channelRepo.save(channel);
     }
 
     @Override
-    public Channel readById(String channelId) {
-        try {
-            return channelRepo.loadById(channelId);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
+    public void delete(UUID channelId) {
+       channelRepo.deleteById(channelId);
     }
 
     @Override
-    public List<Channel> readAll() {
-        return channelRepo.loadAll().values().stream().toList();
-    }
+    public void addUser(UUID channelId, UUID userId) {
+        Channel channel = channelRepo.findById(channelId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 채널 ID입니다."));
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
 
-    @Override
-    public Channel update(String channelId, Channel updateChannel) {
-        Map<String, Channel> channelData = channelRepo.loadAll();
-        if (!channelData.containsKey(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-        Channel originChannel = channelData.get(channelId);
-
-        if (isChannelNameDuplicate(updateChannel.getChannelName())) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 채널 이름입니다.");
-        }
-
-        originChannel.updateChannelName(updateChannel.getChannelName());
-        channelRepo.save(originChannel);
-        return originChannel;
-    }
-
-    @Override
-    public void deleteChannel(String channelId) {
-        Map<String, Channel> channelData = channelRepo.loadAll();
-        if (!channelData.containsKey(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-
-        channelData.remove(channelId);
-        System.out.println("[삭제 완료]");
-        messageService.deleteByChannel(channelData.get(channelId));
-        channelRepo.delete(channelRepo.loadById(channelId));
-    }
-
-    @Override
-    public void addUser(String channelId, User user) {
-        if (!channelRepo.loadAll().containsKey(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-
-        Channel channel = channelRepo.loadById(channelId);
-        if (isUserDuplicate(channel, user.getUserId())) {
+        if (isUserDuplicate(channel, user.getId())) {
             throw new IllegalArgumentException("[error] 이미 존재하는 user입니다.");
         }
         channel.addUser(user);
@@ -99,42 +70,31 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public List<User> getUserList(String channelId) {
-        if (!channelRepo.loadAll().containsKey(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-        return channelRepo.loadById(channelId).getUsers().values().stream().toList();
+    public List<User> findUsers(UUID channelId) {
+        Channel channel = channelRepo.findById(channelId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 채널 ID입니다."));
+        return channel.getUsers().values().stream().toList();
     }
 
     @Override
-    public void deleteUser(String channelId, User user) {
-        Map<String, Channel> channelData = channelRepo.loadAll();
+    public void deleteUser(UUID channelId, User user) {
+        Channel channel = channelRepo.findById(channelId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 채널 ID입니다."));
 
-        if (!channelData.containsKey(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-        Channel channel = channelData.get(channelId);
-
-        if (!isUserDuplicate(channel, user.getUserId())) {
+        if (!isUserDuplicate(channel, user.getId())) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 user입니다.");
         }
-        channel.getUsers().remove(user.getUserId());
+        channel.getUsers().remove(user.getId());
         System.out.println("[User 삭제 완료]");
         channelRepo.save(channel);
     }
 
 
-    private boolean isChannelIdDuplicate(String channelId) {
-        Map<String, Channel> channelData = channelRepo.loadAll();
-        return channelData.containsKey(channelId);
-    }
-
     private boolean isChannelNameDuplicate(String channelName) {
-        Map<String, Channel> channelData = channelRepo.loadAll();
-        return channelData.values().stream().anyMatch(channel -> channel.getChannelName().equals(channelName));
+        return channelRepo.findAll().stream().anyMatch(channel -> channel.getChannelName().equals(channelName));
     }
 
-    private boolean isUserDuplicate(Channel channel, String userId) {
+    private boolean isUserDuplicate(Channel channel, UUID userId) {
         return channel.getUser(userId) != null;
     }
 }
