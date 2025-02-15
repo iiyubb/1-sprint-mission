@@ -1,60 +1,64 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Getter
 public class Channel {
-    private final String channelId;
-    private String channelName;
-    private final long createdAt;
-    private long updatedAt;
-    private Map<String, User> users;
+    @JsonIgnore
+    private UUID id;
+    @JsonIgnore
+    private Long createdAt;
 
-    public Channel() {
-        this.channelId = UUID.randomUUID().toString();
-        this.createdAt = System.currentTimeMillis();
+    private String channelName;
+    private ChannelType type;
+    private Long updatedAt;
+    private String description;
+    private User user;
+    private Map<UUID, User> users;
+
+    protected Channel() {
     }
-    public Channel(String channelName) {
-        this();
+
+    protected Channel(UUID id, Long createdAt) {
+        this.id = id;
+        this.createdAt = createdAt;
+    }
+
+    public Channel(String channelName, ChannelType type, String description) {
+        this(UUID.randomUUID(), Instant.now().getEpochSecond());
         this.channelName = channelName;
+        this.type = type;
+        this.description = description;
         users = new HashMap<>();
     }
 
     // Getter
-    public String getChannelId() {
-        return channelId;
-    }
-
-    public String getChannelName() {
-        return channelName;
-    }
-
-    public User getUser(String userId) {
+    public User getUser(UUID userId) {
         return users.get(userId);
     }
 
-    public Map<String, User> getUsers() {
-        return users;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public long getUpdatedAt() {
-        return updatedAt;
-    }
-
     // Setter
-    public void updateChannelName(String channelName) {
-        this.channelName = channelName;
-        this.updatedAt = System.currentTimeMillis();
+    public void update(String newName, String newDescription) {
+        boolean anyValueUpdated = false;
+        if (newName != null && !newName.equals(this.channelName)) {
+            this.channelName = newName;
+            this.updatedAt = Instant.now().getEpochSecond();
+        }
+        if (newDescription != null && !newDescription.equals(this.description)) {
+            this.description = newDescription;
+            this.updatedAt = Instant.now().getEpochSecond();
+        }
     }
 
     public void addUser(User user) {
-        users.put(user.getUserId(), user);
-        this.updatedAt = System.currentTimeMillis();
+        users.put(user.getId(), user);
+        this.updatedAt = Instant.now().getEpochSecond();
     }
 
 }

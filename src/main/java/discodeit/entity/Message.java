@@ -1,56 +1,46 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+
+import java.time.Instant;
 import java.util.UUID;
 
+@Getter
 public class Message {
-    private String messageId;
-    private User sendUser;
-    private String messageDetail;
-    private long createdAt;
-    private long updatedAt;
-    private Channel channel;
+    @JsonIgnore
+    private UUID id;
+    @JsonIgnore
+    private Long createdAt;
 
-    public Message() {
-        messageId = UUID.randomUUID().toString();
-        createdAt = System.currentTimeMillis();
+    private User sendUser;
+    private Channel channel;
+    private String messageDetail;
+    private Long updatedAt;
+
+    // 생성자
+    protected Message() {
+    }
+
+    protected Message(UUID id, Long createdAt) {
+        this.id = id;
+        this.createdAt = createdAt;
     }
 
     public Message(User sendUser, Channel channel, String messageDetail) {
-        this();
+        this(UUID.randomUUID(), Instant.now().getEpochSecond());
         this.sendUser = sendUser;
-        this.messageDetail = messageDetail;
         this.channel = channel;
-    }
-
-    // Getter
-    public String getMessageId() {
-        return messageId;
-    }
-
-    public User getSendUser() {
-        return sendUser;
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public String getMessageDetail() {
-        return messageDetail;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public long getUpdatedAt() {
-        return updatedAt;
+        this.messageDetail = messageDetail;
     }
 
     // Setter
-    public void updateMessageDetail(String messageDetail) {
-        this.messageDetail = messageDetail;
-        updatedAt = System.currentTimeMillis();
+    public void update(String newDetail) {
+        boolean anyValueUpdated = false;
+        if (newDetail != null && !newDetail.equals(this.messageDetail)) {
+            this.messageDetail = newDetail;
+            this.updatedAt = Instant.now().getEpochSecond();
+        }
     }
 
 }
