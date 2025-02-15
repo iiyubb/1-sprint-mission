@@ -6,19 +6,20 @@ import discodeit.repository.UserRepository;
 import discodeit.repository.file.FileChannelRepository;
 import discodeit.repository.file.FileMessageRepository;
 import discodeit.repository.file.FileUserRepository;
-import discodeit.repository.jcf.JCFChannelRepository;
-import discodeit.repository.jcf.JCFMessageRepository;
-import discodeit.repository.jcf.JCFUserRepository;
 import discodeit.service.ChannelService;
 import discodeit.service.MessageService;
 import discodeit.service.UserService;
 import discodeit.service.basic.BasicChannelService;
 import discodeit.service.basic.BasicMessageService;
 import discodeit.service.basic.BasicUserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.nio.file.Path;
 
-
+@Configuration
 public class BasicServiceFactory implements ServiceFactory {
 
     private UserRepository userRepository;
@@ -29,18 +30,19 @@ public class BasicServiceFactory implements ServiceFactory {
     private ChannelService channelService;
     private MessageService messageService;
 
-    public BasicServiceFactory() {
-
+    private BasicServiceFactory() {
     }
 
-    public BasicServiceFactory(Path userPath, Path channelPath, Path messagePath) {
+    public BasicServiceFactory(@Qualifier("userFilePath") Path userPath,
+                               @Qualifier("channelFilePath") Path channelPath,
+                               @Qualifier("messageFilePath") Path messagePath) {
         this.userRepository = new FileUserRepository(userPath);
-        this.messageRepository = new FileMessageRepository(messagePath);
-        this.channelRepository = new FileChannelRepository(channelPath);
+        this.messageRepository = new FileMessageRepository(channelPath);
+        this.channelRepository = new FileChannelRepository(messagePath);
 
         this.userService = new BasicUserService(userRepository);
         this.messageService = new BasicMessageService(messageRepository);
-        this.channelService = new BasicChannelService(channelRepository, messageService);
+        this.channelService = new BasicChannelService(channelRepository, userRepository);
     }
 
     @Override
@@ -62,7 +64,7 @@ public class BasicServiceFactory implements ServiceFactory {
     @Override
     public ChannelService createChannelService() {
         if (channelService == null) {
-            channelService = new BasicChannelService(channelRepository, messageService);
+            channelService = new BasicChannelService(channelRepository, userRepository);
         }
         return channelService;
     }

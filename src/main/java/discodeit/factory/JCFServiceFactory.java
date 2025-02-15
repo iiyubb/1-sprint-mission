@@ -39,7 +39,7 @@ public class JCFServiceFactory implements ServiceFactory {
     @Override
     public ChannelService createChannelService() {
         if (channelService == null) {
-            channelService = new JCFChannelService(messageService);
+            channelService = new JCFChannelService(userService);
         }
         return channelService;
     }
