@@ -1,6 +1,5 @@
 package discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -8,9 +7,7 @@ import java.util.UUID;
 
 @Getter
 public class Message {
-    @JsonIgnore
     private UUID id;
-    @JsonIgnore
     private Long createdAt;
 
     private User sendUser;

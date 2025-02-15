@@ -1,19 +1,13 @@
 package discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Getter
 public class User {
-    @JsonIgnore
     private UUID id;
-
-    @JsonIgnore
     private Long createdAt;
 
     private String username;
