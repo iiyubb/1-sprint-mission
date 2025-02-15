@@ -1,3 +1,6 @@
 spring:
   application:
     name: discodeit
+
+  main:
+    allow-bean-definition-overriding: true
