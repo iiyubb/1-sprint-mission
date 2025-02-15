@@ -2,9 +2,9 @@ package discodeit.repository.jcf;
 
 import discodeit.entity.Channel;
 import discodeit.repository.ChannelRepository;
+import discodeit.utils.FileUtil;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class JCFChannelRepository implements ChannelRepository {
     Map<String, Channel> channelData;
@@ -13,27 +13,31 @@ public class JCFChannelRepository implements ChannelRepository {
         this.channelData = new HashMap<>();
     }
 
-    @Override
-    public void save(Channel channel) {
-        channelData.put(channel.getChannelId(), channel);
+    public Channel save(Channel channel) {
+        channelData.put(channel.getId().toString(), channel);
+        return channel;
     }
 
     @Override
-    public Channel loadById(String channelId) {
-        if (!channelData.containsKey(channelId)) {
+    public Optional<Channel> findById(UUID channelId) {
+        if (!channelData.containsKey(channelId.toString())) {
             throw new IllegalArgumentException("[error] 존재하지 않는 channel ID입니다.");
         }
-        return channelData.get(channelId);
+        return Optional.ofNullable(channelData.get(channelId.toString()));
     }
 
     @Override
-    public Map<String, Channel> loadAll() {
-        return channelData;
+    public List<Channel> findAll() {
+        return channelData.values().stream().toList();
     }
 
     @Override
-    public void delete(Channel channel) {
-        channelData.remove(channel.getChannelId());
+    public boolean existsById(UUID channelId) {
+        return channelData.containsKey(channelId.toString());
     }
 
+    @Override
+    public void deleteById(UUID channelId) {
+        channelData.remove(channelId.toString());
+    }
 }

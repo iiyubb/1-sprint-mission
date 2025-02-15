@@ -1,13 +1,15 @@
-package discodeit.repository;
+package discodeit.repository                                                                                                                                                                                                                                                                                                                                                                                                                   ;
 
 import discodeit.entity.User;
 
-import java.nio.file.Path;
-import java.util.Map;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface UserRepository {
-    void save(User user);
-    User loadById(String userId);
-    Map<String, User> loadAll();
-    void delete(User user);
+    User save(User user);
+    Optional<User> findById(UUID id);
+    List<User> findAll();
+    boolean existsById(UUID id);
+    void deleteById(UUID id);
 }

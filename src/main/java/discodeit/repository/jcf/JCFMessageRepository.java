@@ -2,9 +2,9 @@ package discodeit.repository.jcf;
 
 import discodeit.entity.Message;
 import discodeit.repository.MessageRepository;
+import discodeit.utils.FileUtil;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class JCFMessageRepository implements MessageRepository {
     private Map<String, Message> messageData;
@@ -14,25 +14,32 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
-    public void save(Message message) {
-        messageData.put(message.getMessageId(), message);
+    public Message save(Message message) {
+        messageData.put(message.getId().toString(), message);
+        return message;
     }
 
     @Override
-    public Message loadById(String messageId) {
-        if (!messageData.containsKey(messageId)) {
+    public Optional<Message> findById(UUID messageId) {
+        if (!messageData.containsKey(messageId.toString())) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
-        return messageData.get(messageId);
+        return Optional.ofNullable(messageData.get(messageId.toString()));
     }
 
     @Override
-    public Map<String, Message> loadAll() {
-        return messageData;
+    public List<Message> findAll() {
+        return messageData.values().stream().toList();
     }
 
     @Override
-    public void delete(Message message) {
-        messageData.remove(message.getMessageId());
+    public boolean existsById(UUID messageId) {
+        return messageData.containsKey(messageId.toString());
     }
+
+    @Override
+    public void deleteById(UUID messageId) {
+        messageData.remove(messageId.toString());
+    }
+
 }
