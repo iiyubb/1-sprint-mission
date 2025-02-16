@@ -8,24 +8,21 @@ import java.util.UUID;
 @Getter
 public class Message {
     private UUID id;
-    private Long createdAt;
+    private Instant createdAt;
 
     private User sendUser;
     private Channel channel;
     private String messageDetail;
-    private Long updatedAt;
+    private Instant updatedAt;
 
     // 생성자
     protected Message() {
-    }
-
-    protected Message(UUID id, Long createdAt) {
-        this.id = id;
-        this.createdAt = createdAt;
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now();
     }
 
     public Message(User sendUser, Channel channel, String messageDetail) {
-        this(UUID.randomUUID(), Instant.now().getEpochSecond());
+        this();
         this.sendUser = sendUser;
         this.channel = channel;
         this.messageDetail = messageDetail;
@@ -33,10 +30,9 @@ public class Message {
 
     // Setter
     public void update(String newDetail) {
-        boolean anyValueUpdated = false;
         if (newDetail != null && !newDetail.equals(this.messageDetail)) {
             this.messageDetail = newDetail;
-            this.updatedAt = Instant.now().getEpochSecond();
+            this.updatedAt = Instant.now();
         }
     }
 
