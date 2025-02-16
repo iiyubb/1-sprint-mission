@@ -8,25 +8,21 @@ import java.util.UUID;
 @Getter
 public class User {
     private UUID id;
-    private Long createdAt;
+    private Instant createdAt;
 
     private String username;
     private String email;
     private String phoneNum;
     private String password;
-    private Long updatedAt;
+    private Instant updatedAt;
 
-    // 생성자
     protected User() {
-    }
-
-    protected User(UUID id, Long createdAt) {
-        this.id = id;
-        this.createdAt = createdAt;
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now();
     }
 
     public User(String username, String email, String phoneNum, String password) {
-        this(UUID.randomUUID(), Instant.now().getEpochSecond());
+        this();
         this.username = username;
         this.email = email;
         this.phoneNum = phoneNum;
@@ -40,19 +36,19 @@ public class User {
 
         if (newUsername != null && !newUsername.equals(this.username)) {
             this.username = newUsername;
-            this.updatedAt = Instant.now().getEpochSecond();
+            this.updatedAt = Instant.now();
         }
         if (newEmail != null && !newEmail.equals(this.email)) {
             this.email = newEmail;
-            this.updatedAt = Instant.now().getEpochSecond();
+            this.updatedAt = Instant.now();
         }
         if (newPhoneNum != null && !newPhoneNum.equals(this.phoneNum)) {
             this.phoneNum = newPhoneNum;
-            this.updatedAt = Instant.now().getEpochSecond();
+            this.updatedAt = Instant.now();
         }
         if (newPassword != null && !newPassword.equals(this.password)) {
             this.password = newPassword;
-            this.updatedAt = Instant.now().getEpochSecond();
+            this.updatedAt = Instant.now();
         }
     }
 
