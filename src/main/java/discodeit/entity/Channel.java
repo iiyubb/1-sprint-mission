@@ -10,25 +10,22 @@ import java.util.UUID;
 @Getter
 public class Channel {
     private UUID id;
-    private Long createdAt;
+    private Instant createdAt;
 
     private String channelName;
     private ChannelType type;
-    private Long updatedAt;
+    private Instant updatedAt;
     private String description;
     private User user;
     private Map<UUID, User> users;
 
     protected Channel() {
-    }
-
-    protected Channel(UUID id, Long createdAt) {
-        this.id = id;
-        this.createdAt = createdAt;
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now();
     }
 
     public Channel(String channelName, ChannelType type, String description) {
-        this(UUID.randomUUID(), Instant.now().getEpochSecond());
+        this();
         this.channelName = channelName;
         this.type = type;
         this.description = description;
@@ -42,20 +39,19 @@ public class Channel {
 
     // Setter
     public void update(String newName, String newDescription) {
-        boolean anyValueUpdated = false;
         if (newName != null && !newName.equals(this.channelName)) {
             this.channelName = newName;
-            this.updatedAt = Instant.now().getEpochSecond();
+            this.updatedAt = Instant.now();
         }
         if (newDescription != null && !newDescription.equals(this.description)) {
             this.description = newDescription;
-            this.updatedAt = Instant.now().getEpochSecond();
+            this.updatedAt = Instant.now();
         }
     }
 
     public void addUser(User user) {
         users.put(user.getId(), user);
-        this.updatedAt = Instant.now().getEpochSecond();
+        this.updatedAt = Instant.now();
     }
 
 }
