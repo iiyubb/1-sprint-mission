@@ -1,5 +1,9 @@
 package discodeit.service;
 
+import discodeit.dto.binarycontent.AddBinaryContentRequest;
+import discodeit.dto.user.CreateUserRequest;
+import discodeit.dto.user.UpdateUserRequest;
+import discodeit.dto.user.UserDto;
 import discodeit.entity.User;
 
 import java.util.List;
@@ -7,9 +11,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserService {
-    User create(String username, String email, String phoneNum, String password);
-    User find(UUID userId);
-    List<User> findAll();
-    User update(UUID userId, String newUsername, String newEmail, String newPhoneNum, String newPassword);
+    User create(CreateUserRequest createUserRequest, Optional<AddBinaryContentRequest> addBinaryContentRequest);
+    UserDto find(UUID userId);
+    List<UserDto> findAll();
+    User update(UUID userId, UpdateUserRequest updateUserRequest, Optional<AddBinaryContentRequest> addBinaryContentRequest);
     void delete(UUID userId);
 }
