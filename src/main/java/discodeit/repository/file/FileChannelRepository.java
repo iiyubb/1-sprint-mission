@@ -1,8 +1,10 @@
 package discodeit.repository.file;
 
+import discodeit.entity.BinaryContent;
 import discodeit.entity.Channel;
 import discodeit.repository.ChannelRepository;
 import discodeit.utils.FileUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -15,7 +17,7 @@ public class FileChannelRepository implements ChannelRepository {
     private Map<String, Channel> channelData;
     private final Path path;
 
-    public FileChannelRepository(Path path) {
+    public FileChannelRepository(@Qualifier("channelFilePath") Path path) {
         this.path = path;
         if (!Files.exists(this.path)) {
             try {
@@ -26,7 +28,7 @@ public class FileChannelRepository implements ChannelRepository {
             }
         }
         FileUtil.init(this.path);
-        channelData = FileUtil.load(this.path, Channel.class);
+        this.channelData = FileUtil.load(this.path, Channel.class);  // 변경된 메서드로 파일 데이터 로딩
     }
 
     @Override
@@ -47,6 +49,12 @@ public class FileChannelRepository implements ChannelRepository {
     @Override
     public List<Channel> findAll() {
         return channelData.values().stream().toList();
+    }
+
+    @Override
+    public List<Channel> findAllByUserId(UUID userId) {
+        return channelData.values().stream()
+                .filter(channel -> channel.getParticipantIds().contains(userId)).toList();
     }
 
     @Override

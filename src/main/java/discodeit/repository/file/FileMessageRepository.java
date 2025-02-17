@@ -3,6 +3,7 @@ package discodeit.repository.file;
 import discodeit.entity.Message;
 import discodeit.repository.MessageRepository;
 import discodeit.utils.FileUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ public class FileMessageRepository implements MessageRepository {
     private Map<String, Message> messageData;
     private final Path path;
 
-    public FileMessageRepository(Path path) {
+    public FileMessageRepository(@Qualifier("messageFilePath") Path path) {
         this.path = path;
         if (!Files.exists(this.path)) {
             try {
@@ -28,7 +29,6 @@ public class FileMessageRepository implements MessageRepository {
         FileUtil.init(this.path);
         this.messageData = FileUtil.load(this.path, Message.class);
     }
-
 
     @Override
     public Message save(Message message) {
@@ -51,6 +51,12 @@ public class FileMessageRepository implements MessageRepository {
     }
 
     @Override
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return messageData.values().stream()
+                .filter(message -> message.getChannelId().equals(channelId)).toList();
+    }
+
+    @Override
     public boolean existsById(UUID messageId) {
         return messageData.containsKey(messageId.toString());
     }
@@ -59,6 +65,13 @@ public class FileMessageRepository implements MessageRepository {
     public void deleteById(UUID messageId) {
         messageData.remove(messageId.toString());
         FileUtil.save(path, messageData);
+    }
+
+    @Override
+    public void deleteByChannelId(UUID channelId) {
+        messageData.values().removeIf(message -> message.getChannelId().equals(channelId));
+        FileUtil.save(path, messageData);
+
     }
 
 }
