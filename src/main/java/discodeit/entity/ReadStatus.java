@@ -1,5 +1,6 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -35,10 +36,6 @@ public class ReadStatus {
             this.lastReadAt = newLastReadAt;
             this.updatedAt = Instant.now();
         }
-    }
-
-    public boolean isOnline() {
-        return lastReadAt.isAfter(Instant.now().minus(Duration.ofMinutes(5)));
     }
 
 }

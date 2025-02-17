@@ -1,8 +1,11 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -10,9 +13,10 @@ public class Message {
     private UUID id;
     private Instant createdAt;
 
-    private User sendUser;
-    private Channel channel;
     private String messageDetail;
+    private UUID sendUserId;
+    private UUID channelId;
+    private List<UUID> attachmentIds;
     private Instant updatedAt;
 
     // 생성자
@@ -21,11 +25,12 @@ public class Message {
         this.createdAt = Instant.now();
     }
 
-    public Message(User sendUser, Channel channel, String messageDetail) {
+    public Message(UUID sendUserId, UUID channelId, String messageDetail, List<UUID> attachmentIds) {
         this();
-        this.sendUser = sendUser;
-        this.channel = channel;
+        this.sendUserId = sendUserId;
+        this.channelId = channelId;
         this.messageDetail = messageDetail;
+        this.attachmentIds = attachmentIds;
     }
 
     // Setter

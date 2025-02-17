@@ -1,7 +1,9 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -34,6 +36,8 @@ public class UserStatus {
         }
     }
 
-
+    public boolean isOnline() {
+        return lastActiveAt.isAfter(Instant.now().minus(Duration.ofMinutes(5)));
+    }
 
 }

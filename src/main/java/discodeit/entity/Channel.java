@@ -1,11 +1,10 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 public class Channel {
@@ -16,8 +15,7 @@ public class Channel {
     private ChannelType type;
     private Instant updatedAt;
     private String description;
-    private User user;
-    private Map<UUID, User> users;
+    private List<UUID> participantIds;
 
     protected Channel() {
         this.id = UUID.randomUUID();
@@ -29,12 +27,7 @@ public class Channel {
         this.channelName = channelName;
         this.type = type;
         this.description = description;
-        users = new HashMap<>();
-    }
-
-    // Getter
-    public User getUser(UUID userId) {
-        return users.get(userId);
+        participantIds = new ArrayList<>();
     }
 
     // Setter
@@ -49,8 +42,13 @@ public class Channel {
         }
     }
 
-    public void addUser(User user) {
-        users.put(user.getId(), user);
+    public void addParticipant(UUID userId) {
+        participantIds.add(userId);
+        this.updatedAt = Instant.now();
+    }
+
+    public void deleteParticipant(UUID userId) {
+        participantIds.remove(userId);
         this.updatedAt = Instant.now();
     }
 

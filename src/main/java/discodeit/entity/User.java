@@ -1,5 +1,6 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -14,6 +15,7 @@ public class User {
     private String email;
     private String phoneNum;
     private String password;
+    private UUID profileId;
     private Instant updatedAt;
 
     protected User() {
@@ -21,19 +23,18 @@ public class User {
         this.createdAt = Instant.now();
     }
 
-    public User(String username, String email, String phoneNum, String password) {
+    public User(String username, String email, String phoneNum, String password, UUID profileId) {
         this();
         this.username = username;
         this.email = email;
         this.phoneNum = phoneNum;
         // TODO: 이렇게 되면 password가 외부에서 접근가능한 거 아닌지??
         this.password = password;
+        this.profileId = profileId;
     }
 
     // Setter
-    public void update(String newUsername, String newEmail, String newPhoneNum, String newPassword) {
-        boolean anyValueUpdated = false;
-
+    public void update(String newUsername, String newEmail, String newPhoneNum, String newPassword, UUID newProfileId) {
         if (newUsername != null && !newUsername.equals(this.username)) {
             this.username = newUsername;
             this.updatedAt = Instant.now();
@@ -48,6 +49,10 @@ public class User {
         }
         if (newPassword != null && !newPassword.equals(this.password)) {
             this.password = newPassword;
+            this.updatedAt = Instant.now();
+        }
+        if (newProfileId != null && !newProfileId.equals(this.profileId)) {
+            this.profileId = newProfileId;
             this.updatedAt = Instant.now();
         }
     }
