@@ -2,13 +2,12 @@ package discodeit.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.MapType;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ public class FileUtil {
             }
         } else {
             try {
-                FileWriter writer = new FileWriter(String.valueOf(directory));
+                FileWriter writer = new FileWriter(directory.toString());
                 writer.write(""); // 내용을 빈 문자열로 덮어씀
                 writer.close();
             } catch (IOException e) {
@@ -42,31 +41,34 @@ public class FileUtil {
         }
     }
 
-    public static <T> void save(Path filePath, Map<String, T> data) {
+    public static <T> Map<String, T> load(Path path, Class<T> valueType) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JsonUtil.getObjectMapper();
 
-            // JSON 파일 쓰기
-            mapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), data);
+            if (!Files.exists(path) || Files.size(path) == 0) {
+                return new HashMap<>();
+            }
 
+            String json = new String(Files.readAllBytes(path)).trim();
+            if (json.isEmpty()) {
+                return new HashMap<>();
+            }
+
+            return mapper.readValue(json, new TypeReference<Map<String, T>>() {});
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return new HashMap<>();
         }
     }
 
-    public static <T> Map<String, T> load(Path directory, Class<T> type) {
+    public static <T> void save(Path path, Map<String, T> data) {
         try {
-            File jsonFile = directory.toFile();
-            if (jsonFile.length() == 0) {
-                System.out.println("파일이 비어 있습니다.");
-                return new HashMap<>();
-            } else {
-                ObjectMapper mapper = new ObjectMapper();
-                MapType mapType = mapper.getTypeFactory().constructMapType(Map.class, String.class, type);
-                return mapper.readValue(jsonFile, mapType);
-            }
+            ObjectMapper mapper = JsonUtil.getObjectMapper();
+
+            String json = mapper.writeValueAsString(data);
+            Files.write(path, json.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("파일 로드 실패: " + e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 }
