@@ -1,6 +1,5 @@
 package discodeit.repository;
 
-import discodeit.dto.channel.ChannelDto;
 import discodeit.entity.Channel;
 
 import java.util.List;

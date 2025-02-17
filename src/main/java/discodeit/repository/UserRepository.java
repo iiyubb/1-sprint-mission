@@ -1,6 +1,5 @@
 package discodeit.repository                                                                                                                                                                                                                                                                                                                                                                                                                   ;
 
-import discodeit.dto.user.UserDto;
 import discodeit.entity.User;
 
 import java.util.List;
