@@ -1,6 +1,6 @@
 //package discodeit.service.file;
 //
-//import discodeit.dto.AddBinaryContentRequest;
+//import discodeit.dto.binarycontent.AddBinaryContentRequest;
 //import discodeit.dto.message.CreateMessageRequest;
 //import discodeit.dto.message.MessageDto;
 //import discodeit.dto.message.UpdateMessageRequest;
