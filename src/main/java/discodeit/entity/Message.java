@@ -1,56 +1,44 @@
 package discodeit.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Getter;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+@Getter
 public class Message {
-    private String messageId;
-    private User sendUser;
+    private UUID id;
+    private Instant createdAt;
+
     private String messageDetail;
-    private long createdAt;
-    private long updatedAt;
-    private Channel channel;
+    private UUID sendUserId;
+    private UUID channelId;
+    private List<UUID> attachmentIds;
+    private Instant updatedAt;
 
-    public Message() {
-        messageId = UUID.randomUUID().toString();
-        createdAt = System.currentTimeMillis();
+    // 생성자
+    protected Message() {
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now();
     }
 
-    public Message(User sendUser, Channel channel, String messageDetail) {
+    public Message(UUID sendUserId, UUID channelId, String messageDetail, List<UUID> attachmentIds) {
         this();
-        this.sendUser = sendUser;
+        this.sendUserId = sendUserId;
+        this.channelId = channelId;
         this.messageDetail = messageDetail;
-        this.channel = channel;
-    }
-
-    // Getter
-    public String getMessageId() {
-        return messageId;
-    }
-
-    public User getSendUser() {
-        return sendUser;
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public String getMessageDetail() {
-        return messageDetail;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public long getUpdatedAt() {
-        return updatedAt;
+        this.attachmentIds = attachmentIds;
     }
 
     // Setter
-    public void updateMessageDetail(String messageDetail) {
-        this.messageDetail = messageDetail;
-        updatedAt = System.currentTimeMillis();
+    public void update(String newDetail) {
+        if (newDetail != null && !newDetail.equals(this.messageDetail)) {
+            this.messageDetail = newDetail;
+            this.updatedAt = Instant.now();
+        }
     }
 
 }

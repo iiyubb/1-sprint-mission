@@ -3,48 +3,75 @@ package discodeit.repository.file;
 import discodeit.entity.Message;
 import discodeit.repository.MessageRepository;
 import discodeit.utils.FileUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.*;
 
+@Repository
 public class FileMessageRepository implements MessageRepository {
     private Map<String, Message> messageData;
-    private Path path;
+    private final Path path;
 
-    public FileMessageRepository() {
-    }
-
-    public FileMessageRepository(Path path) {
+    public FileMessageRepository(@Qualifier("messageFilePath") Path path) {
         this.path = path;
-        FileUtil.init(path);
-        this.messageData = FileUtil.load(path, Message.class);
+        if (!Files.exists(this.path)) {
+            try {
+                Files.createFile(this.path);
+                FileUtil.save(this.path, new HashMap<>());
+            } catch (IOException e) {
+                throw new RuntimeException("[error] 메세지 파일을 초기화 불가능", e);
+            }
+        }
+        FileUtil.init(this.path);
+        this.messageData = FileUtil.load(this.path, Message.class);
     }
 
-
     @Override
-    public void save(Message message) {
-        messageData.put(message.getMessageId(), message);
+    public Message save(Message message) {
+        messageData.put(message.getId().toString(), message);
         FileUtil.save(path, messageData);
+        return message;
     }
 
     @Override
-    public Message loadById(String messageId) {
-        if (!messageData.containsKey(messageId)) {
+    public Optional<Message> findById(UUID messageId) {
+        if (!messageData.containsKey(messageId.toString())) {
             throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
         }
-        return messageData.get(messageId);
+        return Optional.ofNullable(messageData.get(messageId.toString()));
     }
 
     @Override
-    public Map<String, Message> loadAll() {
-        return messageData;
+    public List<Message> findAll() {
+        return messageData.values().stream().toList();
     }
 
     @Override
-    public void delete(Message message) {
-        messageData.remove(message.getMessageId());
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return messageData.values().stream()
+                .filter(message -> message.getChannelId().equals(channelId)).toList();
+    }
+
+    @Override
+    public boolean existsById(UUID messageId) {
+        return messageData.containsKey(messageId.toString());
+    }
+
+    @Override
+    public void deleteById(UUID messageId) {
+        messageData.remove(messageId.toString());
         FileUtil.save(path, messageData);
     }
 
+    @Override
+    public void deleteByChannelId(UUID channelId) {
+        messageData.values().removeIf(message -> message.getChannelId().equals(channelId));
+        FileUtil.save(path, messageData);
+
+    }
 
 }

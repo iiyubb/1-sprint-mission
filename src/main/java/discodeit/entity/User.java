@@ -1,64 +1,60 @@
 package discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Getter;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.UUID;
 
+@Getter
 public class User {
-    private final String userId;
-    private String userName;
+    private UUID id;
+    private Instant createdAt;
+
+    private String username;
     private String email;
     private String phoneNum;
-    private final long createdAt;
-    private long updatedAt;
+    private String password;
+    private UUID profileId;
+    private Instant updatedAt;
 
-    public User() {
-        this.userId = UUID.randomUUID().toString();
-        this.createdAt = System.currentTimeMillis();
+    protected User() {
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now();
     }
 
-    public User(String userName, String email, String phoneNum) {
+    public User(String username, String email, String phoneNum, String password, UUID profileId) {
         this();
-        this.userName = userName;
+        this.username = username;
         this.email = email;
         this.phoneNum = phoneNum;
-    }
-
-    // Getter
-    public String getUserId() {
-        return userId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPhoneNum() {
-        return phoneNum;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public long getUpdatedAt() {
-        return updatedAt;
+        // TODO: 이렇게 되면 password가 외부에서 접근가능한 거 아닌지??
+        this.password = password;
+        this.profileId = profileId;
     }
 
     // Setter
-    public void updateEmail(String email) {
-        this.email = email;
-        this.updatedAt = System.currentTimeMillis();
-    }
-
-    public void updatePhoneNum(String phoneNum) {
-        this.phoneNum = phoneNum;
-        this.updatedAt = System.currentTimeMillis();
+    public void update(String newUsername, String newEmail, String newPhoneNum, String newPassword, UUID newProfileId) {
+        if (newUsername != null && !newUsername.equals(this.username)) {
+            this.username = newUsername;
+            this.updatedAt = Instant.now();
+        }
+        if (newEmail != null && !newEmail.equals(this.email)) {
+            this.email = newEmail;
+            this.updatedAt = Instant.now();
+        }
+        if (newPhoneNum != null && !newPhoneNum.equals(this.phoneNum)) {
+            this.phoneNum = newPhoneNum;
+            this.updatedAt = Instant.now();
+        }
+        if (newPassword != null && !newPassword.equals(this.password)) {
+            this.password = newPassword;
+            this.updatedAt = Instant.now();
+        }
+        if (newProfileId != null && !newProfileId.equals(this.profileId)) {
+            this.profileId = newProfileId;
+            this.updatedAt = Instant.now();
+        }
     }
 
 }

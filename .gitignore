@@ -1,5 +1,12 @@
-# Created by https://www.toptal.com/developers/gitignore/api/java,intellij,macos
-# Edit at https://www.toptal.com/developers/gitignore?templates=java,intellij,macos
+.gradle
+.idea
+.github
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+# Created by https://www.toptal.com/developers/gitignore/api/intellij,java,macos
+# Edit at https://www.toptal.com/developers/gitignore?templates=intellij,java,macos
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
@@ -173,4 +180,4 @@ Temporary Items
 # iCloud generated files
 *.icloud
 
-# End of https://www.toptal.com/developers/gitignore/api/java,intellij,macos
+# End of https://www.toptal.com/developers/gitignore/api/intellij,java,macos

@@ -1,48 +1,70 @@
 package discodeit.repository.file;
 
+import discodeit.entity.BinaryContent;
 import discodeit.entity.Channel;
 import discodeit.repository.ChannelRepository;
 import discodeit.utils.FileUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.*;
 
+@Repository
 public class FileChannelRepository implements ChannelRepository {
     private Map<String, Channel> channelData;
-    private Path path;
+    private final Path path;
 
-    public FileChannelRepository() {
-
-    }
-
-    public FileChannelRepository(Path path) {
+    public FileChannelRepository(@Qualifier("channelFilePath") Path path) {
         this.path = path;
-        FileUtil.init(path);
-        channelData = FileUtil.load(path, Channel.class);
+        if (!Files.exists(this.path)) {
+            try {
+                Files.createFile(this.path);
+                FileUtil.save(this.path, new HashMap<>());
+            } catch (IOException e) {
+                throw new RuntimeException("[error] 채널 파일을 초기화 불가능", e);
+            }
+        }
+        FileUtil.init(this.path);
+        this.channelData = FileUtil.load(this.path, Channel.class);  // 변경된 메서드로 파일 데이터 로딩
     }
 
     @Override
-    public void save(Channel channel) {
-        channelData.put(channel.getChannelId(), channel);
+    public Channel save(Channel channel) {
+        channelData.put(channel.getId().toString(), channel);
         FileUtil.save(path, channelData);
+        return channel;
     }
 
     @Override
-    public Channel loadById(String channelId) {
-        if (!channelData.containsKey(channelId)) {
+    public Optional<Channel> findById(UUID channelId) {
+        if (!channelData.containsKey(channelId.toString())) {
             throw new IllegalArgumentException("[error] 존재하지 않는 channel ID입니다.");
         }
-        return channelData.get(channelId);
+        return Optional.ofNullable(channelData.get(channelId.toString()));
     }
 
     @Override
-    public Map<String, Channel> loadAll() {
-        return channelData;
+    public List<Channel> findAll() {
+        return channelData.values().stream().toList();
     }
 
     @Override
-    public void delete(Channel channel) {
-        channelData.remove(channel.getChannelId());
+    public List<Channel> findAllByUserId(UUID userId) {
+        return channelData.values().stream()
+                .filter(channel -> channel.getParticipantIds().contains(userId)).toList();
+    }
+
+    @Override
+    public boolean existsById(UUID channelId) {
+        return channelData.containsKey(channelId.toString());
+    }
+
+    @Override
+    public void deleteById(UUID channelId) {
+        channelData.remove(channelId.toString());
         FileUtil.save(path, channelData);
     }
 }

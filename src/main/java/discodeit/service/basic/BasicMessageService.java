@@ -1,112 +1,107 @@
 package discodeit.service.basic;
 
-import discodeit.entity.Channel;
-import discodeit.entity.Message;
-import discodeit.entity.User;
+import discodeit.dto.binarycontent.AddBinaryContentRequest;
+import discodeit.dto.message.CreateMessageRequest;
+import discodeit.dto.message.MessageDto;
+import discodeit.dto.message.UpdateMessageRequest;
+import discodeit.entity.*;
+import discodeit.repository.BinaryContentRepository;
+import discodeit.repository.ChannelRepository;
 import discodeit.service.MessageService;
 import discodeit.repository.MessageRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
+@Service
+@RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
-    private MessageRepository messageRepo;
-
-    public BasicMessageService() {
-    }
-
-    public BasicMessageService(MessageRepository messageRepo) {
-        this.messageRepo = messageRepo;
-    }
+    private final MessageRepository messageRepo;
+    private final ChannelRepository channelRepo;
+    private final BinaryContentRepository binaryContentRepo;
 
     @Override
-    public void create(Message newMessage) {
-        String messageId = newMessage.getMessageId();
-        String messageDetail = newMessage.getMessageDetail();
-        User sendUser = newMessage.getSendUser();
-        Channel channel = newMessage.getChannel();
-
+    public Message create(CreateMessageRequest request, List<AddBinaryContentRequest> contentRequests) {
         // 예외처리
-        if (isMessageIdDuplicate(messageId)) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 메세지 ID입니다.");
-        }
-        if (messageDetail == null || messageDetail.isEmpty()) {
+        if (request.messageDetail() == null || request.messageDetail().isEmpty()) {
             throw new IllegalArgumentException("[error] 유효하지 않은 메세지 형식입니다.");
         }
-        if (sendUser.getUserId() == null || sendUser.getUserId().isEmpty()) {
+        if (request.userId() == null || request.userId().equals(new UUID(0L, 0L))) {
             throw new IllegalArgumentException("[error] 존재하지 않는 사용자는 메세지를 전송할 수 없습니다.");
         }
-        if (channel.getChannelId() == null || channel.getChannelId().isEmpty()) {
+        if (request.channelId() == null || request.channelId().equals(new UUID(0L, 0L))) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널에서 메세지를 전송할 수 없습니다.");
         }
+//        if (channelRepo.findAllByUserId(request.userId()) == null || channelRepo.findAllByUserId(request.userId()).isEmpty()) {
+//            throw new IllegalArgumentException("[error] 메세지 작성자가 해당 채널의 참여자가 아닙니다.");
+//        }
 
-        messageRepo.save(newMessage);
+        List<UUID> attachmentIds = contentRequests.stream()
+                .map(attachmentRequest -> {
+                    String fileName = attachmentRequest.filename();
+                    BinaryContentType contentType = attachmentRequest.type();
+                    byte[] bytes = attachmentRequest.bytes();
+
+                    BinaryContent binaryContent = new BinaryContent(fileName, contentType, (long) bytes.length, bytes);
+                    BinaryContent createdBinaryContent = binaryContentRepo.save(binaryContent);
+                    return createdBinaryContent.getId();
+                })
+                .toList();
+
+        Message message = new Message(request.userId(), request.channelId(), request.messageDetail(), attachmentIds);
+        return messageRepo.save(message);
     }
 
     @Override
-    public Message readById(String messageId) {
-        Map<String, Message> messageData = messageRepo.loadAll();
-        if (!messageData.containsKey(messageId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
+    public MessageDto find(UUID messageId) {
+        return messageRepo.findById(messageId)
+                .map(this::toDto)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 메세지 ID입니다."));
+    }
+
+    @Override
+    public List<MessageDto> findAllByChannelId(UUID channelId) {
+        return messageRepo.findAllByChannelId(channelId).stream().map(this::toDto).toList();
+    }
+
+    @Override
+    public Message update(UUID messageId, UpdateMessageRequest request) {
+        Message message = messageRepo.findById(messageId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 메세지 ID입니다."));
+
+        if (request.newMessageDetail() == null || request.newMessageDetail().isBlank()) {
+            throw new IllegalArgumentException("[error] 빈 메세지는 전송할 수 없습니다");
         }
-        return messageData.get(messageId);
+        message.update(request.newMessageDetail());
+        return messageRepo.save(message);
     }
 
     @Override
-    public List<Message> readByChannel(String channelId) {
-        Map<String, Message> messageData = messageRepo.loadAll();
-        List<String> channelList = messageData.values().stream().map(m -> m.getChannel().getChannelId()).toList();
-        if (!channelList.contains(channelId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 채널 ID입니다.");
-        }
-        return messageData.values().stream().filter(message -> message.getChannel().getChannelId().equals(channelId)).collect(Collectors.toList());
-    }
+    public void delete(UUID messageId) {
+        Message message = messageRepo.findById(messageId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 메세지 ID입니다."));
 
-    @Override
-    public List<Message> readAll() {
-        return messageRepo.loadAll().values().stream().toList();
-    }
-
-    @Override
-    public Message updateMessage(String messageId, Message updateMessage) {
-        Map<String, Message> messageData = messageRepo.loadAll();
-        if (!messageData.containsKey(messageId)) {
-            throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
-        }
-        Message originMessage = messageData.get(messageId);
-
-        originMessage.updateMessageDetail(updateMessage.getMessageDetail());
-        messageRepo.save(originMessage);
-        return originMessage;
-    }
-
-    @Override
-    public void delete(String messageId) {
-        Map<String, Message> messageData = messageRepo.loadAll();
-        if (!messageData.containsKey(messageId)) {
-            throw new RuntimeException("[error] 존재하지 않는 메세지 ID입니다.");
-        }
-        messageRepo.delete(messageRepo.loadById(messageId));
+        message.getAttachmentIds().forEach(binaryContentRepo::deleteById);
+        messageRepo.deleteById(messageId);
         System.out.println("[삭제 완료]");
     }
 
-    @Override
-    public void deleteByChannel(Channel channel) {
-        messageRepo.loadAll().values().removeIf(m -> m.getChannel().equals(channel));
-    }
-
-    @Override
-    public Channel getChannel(String messageId) {
-        Map<String, Message> messageData = messageRepo.loadAll();
-        if (!messageData.containsKey(messageId)) {
-            throw new IllegalArgumentException("[error] 존재하지 않는 메세지 ID입니다.");
+    public MessageDto toDto(Message message) {
+        List<UUID> attachmentIds = message.getAttachmentIds();
+        if (attachmentIds == null) {
+            attachmentIds = new ArrayList<>();
         }
-        return messageData.get(messageId).getChannel();
+
+        return new MessageDto(
+                message.getId(),
+                message.getCreatedAt(),
+                message.getMessageDetail(),
+                message.getSendUserId(),
+                message.getChannelId(),
+                attachmentIds,
+                message.getUpdatedAt()
+        );
     }
 
-
-    private boolean isMessageIdDuplicate(String messageId) {
-        return messageRepo.loadAll().containsKey(messageId);
-    }
 }
