@@ -101,7 +101,7 @@ public class BasicChannelService implements ChannelService {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
 
-        if (isUserDuplicate(channel, user.getId())) {
+        if (channel.getParticipantIds().contains(userId)) {
             throw new IllegalArgumentException("[error] 이미 존재하는 user입니다.");
         }
         channel.addParticipant(user.getId());
@@ -114,7 +114,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = channelRepo.findById(channelId)
                 .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 채널 ID입니다."));
 
-        if (!isUserDuplicate(channel, userId)) {
+        if (!channel.getParticipantIds().contains(userId)) {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 user입니다.");
         }
         channel.deleteParticipant(userId);
