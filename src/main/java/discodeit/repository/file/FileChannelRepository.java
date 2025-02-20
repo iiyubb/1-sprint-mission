@@ -1,10 +1,10 @@
 package discodeit.repository.file;
 
-import discodeit.entity.BinaryContent;
 import discodeit.entity.Channel;
 import discodeit.repository.ChannelRepository;
 import discodeit.utils.FileUtil;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -12,12 +12,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+@ConditionalOnProperty(value = "repository.type", havingValue = "file")
 @Repository
 public class FileChannelRepository implements ChannelRepository {
     private Map<String, Channel> channelData;
     private final Path path;
 
-    public FileChannelRepository(@Qualifier("channelFilePath") Path path) {
+    public FileChannelRepository(@Value("repository.channel-file-path") Path path) {
         this.path = path;
         if (!Files.exists(this.path)) {
             try {

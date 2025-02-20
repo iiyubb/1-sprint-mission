@@ -4,6 +4,8 @@ import discodeit.entity.UserStatus;
 import discodeit.repository.UserStatusRepository;
 import discodeit.utils.FileUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -11,12 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+@ConditionalOnProperty(value = "repository.type", havingValue = "file")
 @Repository
 public class FileUserStatusRepository implements UserStatusRepository {
     private Map<String, UserStatus> userStatusData;
     private Path path;
 
-    public FileUserStatusRepository(@Qualifier("userStatusFilePath") Path path) {
+    public FileUserStatusRepository(@Value("repository.user-status-file-path") Path path) {
         this.path = path;
         if (!Files.exists(this.path)) {
             try {
