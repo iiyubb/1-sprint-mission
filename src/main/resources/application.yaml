@@ -18,4 +18,9 @@ logging:
 
 repository:
   type: file     # jcf | file
-  file-directory: .discodeit
+  user-file-path: .data/User.json
+  channel-file-path: .data/Channel.json
+  message-file-path: .data/Message.json
+  user-status-file-path: .data/UserStatus.json
+  read-status-file-path: .data/ReadStatus.json
+  binary-content-file-path: .data/BinaryContent.json
