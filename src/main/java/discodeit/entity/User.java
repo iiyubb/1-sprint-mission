@@ -28,7 +28,6 @@ public class User {
         this.username = username;
         this.email = email;
         this.phoneNum = phoneNum;
-        // TODO: 이렇게 되면 password가 외부에서 접근가능한 거 아닌지??
         this.password = password;
         this.profileId = profileId;
     }
