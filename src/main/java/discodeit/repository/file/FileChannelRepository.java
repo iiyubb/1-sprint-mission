@@ -18,7 +18,7 @@ public class FileChannelRepository implements ChannelRepository {
     private Map<String, Channel> channelData;
     private final Path path;
 
-    public FileChannelRepository(@Value("repository.channel-file-path") Path path) {
+    public FileChannelRepository(@Value("${repository.channel-file-path}") Path path) {
         this.path = path;
         if (!Files.exists(this.path)) {
             try {
@@ -61,6 +61,11 @@ public class FileChannelRepository implements ChannelRepository {
     @Override
     public boolean existsById(UUID channelId) {
         return channelData.containsKey(channelId.toString());
+    }
+
+    @Override
+    public boolean existsByName(String channelName) {
+        return channelData.values().stream().anyMatch(channel -> channel.getChannelName().equals(channelName));
     }
 
     @Override
