@@ -77,7 +77,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = channelRepo.findById(channelId)
                 .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 채널 ID입니다."));
 
-        if (isChannelNameDuplicate(updateChannelRequest.newName())) {
+        if (channelRepo.existsByName(updateChannelRequest.newName())) {
             throw new IllegalArgumentException("[error] 이미 존재하는 채널 이름입니다.");
         }
 
@@ -92,6 +92,8 @@ public class BasicChannelService implements ChannelService {
     @Override
     public void delete(UUID channelId) {
        channelRepo.deleteById(channelId);
+       messageRepo.deleteByChannelId(channelId);
+       readStatusRepo.deleteByChannelId(channelId);
     }
 
     @Override
@@ -118,14 +120,13 @@ public class BasicChannelService implements ChannelService {
             throw new IllegalArgumentException("[error] 존재하지 않는 채널 user입니다.");
         }
         channel.deleteParticipant(userId);
-        messageRepo.deleteByChannelId(channelId);
         readStatusRepo.deleteByChannelId(channelId);
         System.out.println("[User 삭제 완료]");
         channelRepo.save(channel);
     }
 
     public ChannelDto toDto(Channel channel) {
-        Instant lastMessageAt = messageRepo.findAllByChannelId(channel.getId())
+        Instant lastestMessageAt = messageRepo.findAllByChannelId(channel.getId())
                 .stream()
                 .sorted(Comparator.comparing(Message::getCreatedAt).reversed())
                 .map(Message::getCreatedAt)
@@ -140,15 +141,8 @@ public class BasicChannelService implements ChannelService {
                 channel.getType(),
                 channel.getDescription(),
                 channel.getParticipantIds(),
-                lastMessageAt
+                lastestMessageAt
         );
     }
 
-    private boolean isChannelNameDuplicate(String channelName) {
-        return channelRepo.findAll().stream().anyMatch(channel -> channel.getChannelName().equals(channelName));
-    }
-
-    private boolean isUserDuplicate(Channel channel, UUID userId) {
-        return channel.getParticipantIds().contains(userId);
-    }
 }
