@@ -48,6 +48,11 @@ public class FileReadStatusRepository implements ReadStatusRepository {
     }
 
     @Override
+    public List<ReadStatus> findAllByUserId(UUID userId) {
+        return readStatusData.values().stream().filter(readStatus -> readStatus.getUserId().equals(userId)).toList();
+    }
+
+    @Override
     public boolean existsById(UUID id) {
         return readStatusData.containsKey(id.toString());
     }
