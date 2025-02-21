@@ -16,7 +16,7 @@ import java.util.*;
 @Repository
 public class FileUserStatusRepository implements UserStatusRepository {
     private Map<String, UserStatus> userStatusData;
-    private Path path;
+    private final Path path;
 
     public FileUserStatusRepository(@Value("repository.user-status-file-path") Path path) {
         this.path = path;

@@ -16,7 +16,7 @@ import java.util.*;
 @Repository
 public class FileReadStatusRepository implements ReadStatusRepository {
     private Map<String, ReadStatus> readStatusData;
-    private Path path;
+    private final Path path;
 
     public FileReadStatusRepository(@Value("repository.read-status-file-path") Path path) {
         this.path = path;

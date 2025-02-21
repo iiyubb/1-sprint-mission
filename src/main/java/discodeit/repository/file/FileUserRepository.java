@@ -18,16 +18,10 @@ import java.util.*;
 @Repository
 public class FileUserRepository implements UserRepository {
     private Map<String, User> userData;
-    private Path path;
-    private ObjectMapper objectMapper;
+    private final Path path;
 
     public FileUserRepository(@Value("repository.user-file-path") Path path) {
         this.path = path;
-
-        // ObjectMapper 초기화 및 JavaTimeModule 등록
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());  // JavaTimeModule을 등록하여 Instant 처리
-
         if (!Files.exists(this.path)) {
             try {
                 Files.createFile(this.path);
