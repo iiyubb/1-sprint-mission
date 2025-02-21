@@ -18,7 +18,7 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
     private Map<String, BinaryContent> binaryData;
     private final Path path;
 
-    public FileBinaryContentRepository(@Value("repository.binary-content-file-path") Path path) {
+    public FileBinaryContentRepository(@Value("${repository.binary-content-file-path}") Path path) {
         this.path = path;
         if (!Files.exists(this.path)) {
             try {
@@ -44,6 +44,11 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
             throw new NoSuchElementException("[error] 해당 ID의 바이너리 데이터가 존재하지 않습니다.");
         }
         return Optional.ofNullable(binaryData.get(id.toString()));
+    }
+
+    @Override
+    public List<BinaryContent> findAllByIdIn(List<UUID> binaryContentIds) {
+        return binaryData.values().stream().filter(content -> binaryContentIds.contains(content.getId())).toList();
     }
 
     @Override
