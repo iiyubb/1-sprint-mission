@@ -5,13 +5,17 @@ import discodeit.entity.BinaryContent;
 import discodeit.entity.BinaryContentType;
 import discodeit.repository.BinaryContentRepository;
 import discodeit.service.BinaryContentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class BasicBinaryContentService implements BinaryContentService {
-    private BinaryContentRepository binaryContentRepo;
+    private final BinaryContentRepository binaryContentRepo;
 
     @Override
     public BinaryContent create(CreateBinaryContentRequest request) {
