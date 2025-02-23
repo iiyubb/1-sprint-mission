@@ -48,6 +48,11 @@ public class FileReadStatusRepository implements ReadStatusRepository {
     }
 
     @Override
+    public List<ReadStatus> findAll() {
+        return readStatusData.values().stream().toList();
+    }
+
+    @Override
     public List<ReadStatus> findAllByUserId(UUID userId) {
         return readStatusData.values().stream().filter(readStatus -> readStatus.getUserId().equals(userId)).toList();
     }
