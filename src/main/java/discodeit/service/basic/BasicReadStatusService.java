@@ -7,16 +7,20 @@ import discodeit.repository.ChannelRepository;
 import discodeit.repository.ReadStatusRepository;
 import discodeit.repository.UserRepository;
 import discodeit.service.ReadStatusService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class BasicReadStatusService implements ReadStatusService {
-    private ReadStatusRepository readStatusRepo;
-    private UserRepository userRepo;
-    private ChannelRepository channelRepo;
+    private final ReadStatusRepository readStatusRepo;
+    private final UserRepository userRepo;
+    private final ChannelRepository channelRepo;
 
     @Override
     public ReadStatus create(CreateReadStatusRequest request) {
@@ -38,6 +42,11 @@ public class BasicReadStatusService implements ReadStatusService {
     public ReadStatus find(UUID readStatusId) {
         return readStatusRepo.findById(readStatusId)
                 .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 Read Status ID입니다."));
+    }
+
+    @Override
+    public List<ReadStatus> findAll() {
+        return readStatusRepo.findAll().stream().toList();
     }
 
     @Override

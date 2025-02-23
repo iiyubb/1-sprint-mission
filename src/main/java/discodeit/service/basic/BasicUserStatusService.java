@@ -6,15 +6,19 @@ import discodeit.entity.UserStatus;
 import discodeit.repository.UserRepository;
 import discodeit.repository.UserStatusRepository;
 import discodeit.service.UserStatusService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class BasicUserStatusService implements UserStatusService {
-    private UserStatusRepository userStatusRepo;
-    private UserRepository userRepo;
+    private final UserStatusRepository userStatusRepo;
+    private final UserRepository userRepo;
 
     @Override
     public UserStatus create(CreateUserStatusRequest request) {
@@ -28,7 +32,14 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatus find(UUID userStatusId) {
-        return userStatusRepo.findById(userStatusId).orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
+        return userStatusRepo.findById(userStatusId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User Status ID입니다."));
+    }
+
+    @Override
+    public UserStatus findByUserId(UUID userId) {
+        return userStatusRepo.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
     }
 
     @Override
@@ -38,7 +49,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatus update(UUID userStatusId, UpdateUserStatusRequest request) {
-        UserStatus userStatus = userStatusRepo.findById(userStatusId).orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User Status ID입니다."));
+        UserStatus userStatus = userStatusRepo.findById(userStatusId)
+                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User Status ID입니다."));
         Instant newLastActiveAt = request.newLastActiveAt();
         userStatus.update(newLastActiveAt);
         return userStatusRepo.save(userStatus);
