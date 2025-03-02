@@ -1,8 +1,9 @@
-package discodeit.service;
+package com.sprint.mission.discodeit.service;
 
-import discodeit.dto.user.LoginRequest;
-import discodeit.entity.User;
+import com.sprint.mission.discodeit.dto.user.LoginRequest;
+import com.sprint.mission.discodeit.entity.User;
 
 public interface AuthService {
-    User login(LoginRequest loginRequest);
+
+  User login(LoginRequest loginRequest);
 }

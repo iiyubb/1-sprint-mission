@@ -1,19 +1,15 @@
-package discodeit.service.basic;
+package com.sprint.mission.discodeit.service.basic;
 
-import discodeit.dto.binarycontent.AddBinaryContentRequest;
-import discodeit.dto.user.CreateUserRequest;
-import discodeit.dto.user.UpdatePasswordRequest;
-import discodeit.dto.user.UpdatePhoneNumRequest;
-import discodeit.dto.user.UpdateProfileRequest;
-import discodeit.entity.BinaryContent;
-import discodeit.entity.BinaryContentType;
-import discodeit.entity.User;
-import discodeit.entity.UserStatus;
-import discodeit.repository.BinaryContentRepository;
-import discodeit.repository.UserStatusRepository;
-import discodeit.service.UserService;
-import discodeit.repository.UserRepository;
-import discodeit.service.UserStatusService;
+import com.sprint.mission.discodeit.dto.binarycontent.CreateBinaryContentRequest;
+import com.sprint.mission.discodeit.dto.user.CreateUserRequest;
+import com.sprint.mission.discodeit.dto.user.UpdateUserRequest;
+import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,133 +19,154 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class BasicUserService implements UserService {
-    private final UserRepository userRepo;
-    private final UserStatusRepository userStatusRepo;
-    private final BinaryContentRepository binaryContentRepo;
-    private final UserStatusService userStatusService;
 
-    @Override
-    public User create(CreateUserRequest createUserRequest, Optional<AddBinaryContentRequest> addBinaryContentRequest) {
-        if (isUsernameDuplicate(createUserRequest.username())) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 사용자 이름입니다.");
-        }
-        if (isEmailDuplicate(createUserRequest.email())) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 E-mail입니다.");
-        }
-        if (isValidEmail(createUserRequest.email())) {
-            throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
-        }
-        if (isPhoneNumDuplicate(createUserRequest.phoneNum())) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 전화번호입니다.");
-        }
-        if (isValidPhoneNum(createUserRequest.phoneNum())) {
-            throw new IllegalArgumentException("[error] 유효하지 않은 전화번호 형식입니다.");
-        }
+  private final UserRepository userRepo;
+  private final UserStatusRepository userStatusRepo;
+  private final BinaryContentRepository binaryContentRepo;
 
-        UUID nullableProfileId = addBinaryContentRequest
-                .map(profileRequest -> {
-                    String fileName = profileRequest.filename();
-                    BinaryContentType contentType = profileRequest.type();
-                    byte[] bytes = profileRequest.bytes();
-                    BinaryContent binaryContent = new BinaryContent(fileName, contentType, (long)bytes.length, bytes);
-                    return binaryContentRepo.save(binaryContent).getId();
-                })
-                .orElse(null);
-
-        User newUser = new User(
-                createUserRequest.username(),
-                createUserRequest.email(),
-                createUserRequest.phoneNum(),
-                createUserRequest.password(),
-                nullableProfileId);
-
-        UserStatus userStatus = new UserStatus(newUser.getId(), Instant.now());
-        userStatusRepo.save(userStatus);
-        return userRepo.save(newUser);
+  @Override
+  public User create(CreateUserRequest request) {
+    if (isUsernameDuplicate(request.username())) {
+      throw new IllegalArgumentException("[error] 이미 존재하는 사용자 이름입니다.");
+    }
+    if (isEmailDuplicate(request.email())) {
+      throw new IllegalArgumentException("[error] 이미 존재하는 E-mail입니다.");
+    }
+    if (isValidEmail(request.email())) {
+      throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
     }
 
-    @Override
-    public User find(UUID userId) {
-        return userRepo.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
+    String password = request.password();
+
+    User user = new User(request.username(), request.email(), password, null);
+    User createdUser = userRepo.save(user);
+
+    Instant now = Instant.now();
+    UserStatus userStatus = new UserStatus(createdUser.getId(), now);
+    userStatusRepo.save(userStatus);
+
+    return createdUser;
+  }
+
+  @Override
+  public User create(CreateUserRequest createUserRequest,
+      CreateBinaryContentRequest binaryContentRequest) {
+    if (isUsernameDuplicate(createUserRequest.username())) {
+      throw new IllegalArgumentException("[error] 이미 존재하는 사용자 이름입니다.");
+    }
+    if (isEmailDuplicate(createUserRequest.email())) {
+      throw new IllegalArgumentException("[error] 이미 존재하는 E-mail입니다.");
+    }
+    if (isValidEmail(createUserRequest.email())) {
+      throw new IllegalArgumentException("[error] 유효하지 않은 E-mail 형식입니다.");
     }
 
-    @Override
-    public List<User> findAll() {
-        return userRepo.findAll()
-                .stream()
-                .toList();
+    String fileName = binaryContentRequest.fileName();
+    String contentType = binaryContentRequest.contentType();
+    byte[] bytes = binaryContentRequest.bytes();
+
+    BinaryContent binaryContent = binaryContentRepo.save(new BinaryContent(fileName, bytes.length,
+        contentType, bytes));
+
+    UUID profileId = binaryContent.getId();
+
+    String password = createUserRequest.password();
+
+    User user = new User(createUserRequest.username(), createUserRequest.email(), password,
+        profileId);
+    User createdUser = userRepo.save(user);
+
+    Instant now = Instant.now();
+    UserStatus userStatus = new UserStatus(createdUser.getId(), now);
+    userStatusRepo.save(userStatus);
+
+    return createdUser;
+  }
+
+  @Override
+  public User find(UUID userId) {
+    return userRepo.findById(userId)
+        .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
+  }
+
+  @Override
+  public List<User> findAll() {
+    return userRepo.findAll()
+        .stream()
+        .toList();
+  }
+
+  @Override
+  public User update(UUID userId, UpdateUserRequest request) {
+    User user = userRepo.findById(userId)
+        .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+
+    String newUsername = request.newUsername();
+    String newEmail = request.newEmail();
+    if (isEmailDuplicate(newEmail)) {
+      throw new IllegalArgumentException("User with email " + newEmail + " already exists");
+    }
+    if (isUsernameDuplicate(newUsername)) {
+      throw new IllegalArgumentException("User with username " + newUsername + " already exists");
     }
 
-    @Override
-    public User updatePhoneNum(UpdatePhoneNumRequest request) {
-        User user = userRepo.findById(request.userId())
-                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
+    String newPassword = request.newPassword();
+    user.update(newUsername, newEmail, newPassword, null);
 
-        if (isPhoneNumDuplicate(request.newPhoneNum())) {
-            throw new IllegalArgumentException("[error] 이미 존재하는 전화번호입니다.");
-        }
-        if (isValidPhoneNum(request.newPhoneNum())) {
-            throw new IllegalArgumentException("[error] 유효하지 않은 전화번호 형식입니다. '010-0000-0000' 형식으로 작성해 주세요.");
-        }
+    return userRepo.save(user);
+  }
 
-        user.updatePhoneNum(request.newPhoneNum());
-        UserStatus userStatus = userStatusService.findByUserId(user.getId());
-        userStatus.update(Instant.now());
-        userStatusRepo.save(userStatus);
-        return userRepo.save(user);
+  @Override
+  public User update(UUID userId, UpdateUserRequest request,
+      CreateBinaryContentRequest profileCreateRequest) {
+    User user = userRepo.findById(userId)
+        .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+
+    String newUsername = request.newUsername();
+    String newEmail = request.newEmail();
+    if (isEmailDuplicate(newEmail)) {
+      throw new IllegalArgumentException("User with email " + newEmail + " already exists");
+    }
+    if (isUsernameDuplicate(newUsername)) {
+      throw new IllegalArgumentException("User with username " + newUsername + " already exists");
     }
 
-    @Override
-    public User updatePassword(UpdatePasswordRequest request) {
-        User user = userRepo.findById(request.userId())
-                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
+    BinaryContent binaryContent = new BinaryContent(profileCreateRequest.fileName(),
+        (long) profileCreateRequest.bytes().length,
+        profileCreateRequest.contentType(), profileCreateRequest.bytes());
 
-        user.updatePassword(request.oldPassword(), request.newPassword());
-        return userRepo.save(user);
-    }
+    UUID profileId = binaryContentRepo.save(binaryContent).getId();
 
-    @Override
-    public User updateProfile(UpdateProfileRequest request) {
-        User user = userRepo.findById(request.userId())
-                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
+    String newPassword = request.newPassword();
+    user.update(newUsername, newEmail, newPassword, profileId);
 
-        user.updateProfile(request.newProfileId());
-        UserStatus userStatus = userStatusService.findByUserId(user.getId());
-        userStatus.update(Instant.now());
-        userStatusRepo.save(userStatus);
-        return userRepo.save(user);
-    }
+    return userRepo.save(user);
+  }
 
-    @Override
-    public void delete(UUID userId) {
-        User user = userRepo.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
+  @Override
+  public void delete(UUID userId) {
+    User user = userRepo.findById(userId)
+        .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
 
-        Optional.ofNullable(user.getProfileId())
-                .ifPresent(binaryContentRepo::deleteById);
-        userStatusRepo.deleteByUserId(userId);
-        userRepo.deleteById(userId);
-        System.out.println("[삭제 완료]");
-    }
+    Optional.ofNullable(user.getProfileId())
+        .ifPresent(binaryContentRepo::deleteById);
+    userStatusRepo.deleteByUserId(userId);
+    userRepo.deleteById(userId);
+    System.out.println("[삭제 완료]");
+  }
 
 
-    private boolean isUsernameDuplicate(String username) {
-        return userRepo.findAll().stream().anyMatch(user -> user.getUsername().equals(username));
-    }
-    private boolean isEmailDuplicate(String email) {
-        return userRepo.findAll().stream().anyMatch(user -> user.getEmail().equals(email));
-    }
-    private boolean isValidEmail(String email) {
-        String emailRegExp = "\\w+@\\w+\\.\\w+(\\.\\w+)?";
-        return !email.matches(emailRegExp);
-    }
-    private boolean isPhoneNumDuplicate(String phoneNum) {
-        return userRepo.findAll().stream().anyMatch(user -> user.getPhoneNum().equals(phoneNum));
-    }
-    private boolean isValidPhoneNum(String phoneNum) {
-        String phoneNumRegExp = "^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$";
-        return !phoneNum.matches(phoneNumRegExp);
-    }
+  private boolean isUsernameDuplicate(String username) {
+    return userRepo.findAll().stream().anyMatch(user -> user.getUsername().equals(username));
+  }
+
+  private boolean isEmailDuplicate(String email) {
+    return userRepo.findAll().stream().anyMatch(user -> user.getEmail().equals(email));
+  }
+
+  private boolean isValidEmail(String email) {
+    String emailRegExp = "\\w+@\\w+\\.\\w+(\\.\\w+)?";
+    return !email.matches(emailRegExp);
+  }
 
 }
