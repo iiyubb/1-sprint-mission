@@ -1,11 +1,19 @@
 server:
   port: 8080
+
 spring:
   application:
     name: discodeit
+
 logging:
   level:
     root: info
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 repository:
   type: file     # jcf | file
