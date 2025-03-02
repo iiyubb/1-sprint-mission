@@ -1,8 +1,7 @@
-package discodeit.dto.binarycontent;
+package com.sprint.mission.discodeit.dto.binarycontent;
 
-import discodeit.entity.BinaryContentType;
-
-public record CreateBinaryContentRequest(String filename,
-                                         BinaryContentType type,
+public record CreateBinaryContentRequest(String fileName,
+                                         String contentType,
                                          byte[] bytes) {
+
 }

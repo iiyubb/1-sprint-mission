@@ -1,8 +1,9 @@
-package discodeit.dto.channel;
+package com.sprint.mission.discodeit.dto.channel;
 
+import java.util.List;
 import java.util.UUID;
 
 public record CreatePrivateChannelRequest(
-                                          UUID participant1,
-                                          UUID participant2) {
+    List<UUID> participants) {
+
 }

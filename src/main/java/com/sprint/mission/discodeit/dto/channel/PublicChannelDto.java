@@ -1,7 +1,7 @@
-package discodeit.dto.channel;
+package com.sprint.mission.discodeit.dto.channel;
 
-import discodeit.entity.Channel;
-import discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -12,21 +12,21 @@ import java.util.UUID;
 public record PublicChannelDto(UUID id,
                                Instant createdAt,
                                String channelName,
-                               ChannelType type,
+                               String type,
                                String description,
                                List<UUID> participantIds,
                                Instant lastMessageAt) {
 
-    public static PublicChannelDto fromDomain(Channel channel, Instant lastMessageAt) {
-        return PublicChannelDto.builder()
-                .id(channel.getId())
-                .createdAt(channel.getCreatedAt())
-                .channelName(channel.getChannelName())
-                .type(channel.getType())
-                .description(channel.getDescription())
-                .participantIds(channel.getParticipantIds())
-                .lastMessageAt(lastMessageAt)
-                .build();
-    }
+  public static PublicChannelDto fromDomain(Channel channel, Instant lastMessageAt) {
+    return PublicChannelDto.builder()
+        .id(channel.getId())
+        .createdAt(channel.getCreatedAt())
+        .channelName(channel.getName())
+        .type(channel.getType())
+        .description(channel.getDescription())
+        .participantIds(channel.getParticipantIds())
+        .lastMessageAt(lastMessageAt)
+        .build();
+  }
 
 }

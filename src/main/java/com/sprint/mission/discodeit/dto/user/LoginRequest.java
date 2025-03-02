@@ -1,8 +1,6 @@
-package discodeit.dto.user;
+package com.sprint.mission.discodeit.dto.user;
 
-import java.util.UUID;
-
-public record LoginRequest(UUID userId,
-                           String username,
+public record LoginRequest(String username,
                            String password) {
+
 }
