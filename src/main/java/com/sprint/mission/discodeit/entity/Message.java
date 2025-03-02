@@ -1,4 +1,4 @@
-package discodeit.entity;
+package com.sprint.mission.discodeit.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
@@ -10,35 +10,36 @@ import java.util.UUID;
 
 @Getter
 public class Message {
-    private UUID id;
-    private Instant createdAt;
 
-    private String messageDetail;
-    private UUID sendUserId;
-    private UUID channelId;
-    private List<UUID> attachmentIds;
-    private Instant updatedAt;
+  private UUID id;
+  private Instant createdAt;
 
-    // 생성자
-    protected Message() {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
+  private Instant updatedAt;
+  private String content;
+  private UUID channelId;
+  private UUID authorId;
+  private List<UUID> attachmentIds;
+
+  // 생성자
+  protected Message() {
+    this.id = UUID.randomUUID();
+    this.createdAt = Instant.now();
+  }
+
+  public Message(UUID authorId, UUID channelId, String content, List<UUID> attachmentIds) {
+    this();
+    this.authorId = authorId;
+    this.channelId = channelId;
+    this.content = content;
+    this.attachmentIds = attachmentIds;
+  }
+
+  // Setter
+  public void update(String newDetail) {
+    if (newDetail != null && !newDetail.equals(this.content)) {
+      this.content = newDetail;
+      this.updatedAt = Instant.now();
     }
-
-    public Message(UUID sendUserId, UUID channelId, String messageDetail, List<UUID> attachmentIds) {
-        this();
-        this.sendUserId = sendUserId;
-        this.channelId = channelId;
-        this.messageDetail = messageDetail;
-        this.attachmentIds = attachmentIds;
-    }
-
-    // Setter
-    public void update(String newDetail) {
-        if (newDetail != null && !newDetail.equals(this.messageDetail)) {
-            this.messageDetail = newDetail;
-            this.updatedAt = Instant.now();
-        }
-    }
+  }
 
 }
