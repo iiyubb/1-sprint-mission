@@ -1,44 +1,34 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
 
 @Getter
 @Setter
-public class UserStatus {
+@Entity
+@Table(name = "user_statuses")
+public class UserStatus extends BaseUpdatableEntity {
 
-  private UUID id;
-  private Instant createdAt;
-
-  private Instant updatedAt;
-  private UUID userId;
+  @NotNull
   private Instant lastActiveAt;
-  private boolean online;
 
-  // 생성자
-  protected UserStatus() {
-    this.createdAt = Instant.now();
-  }
+  @OneToOne()
+  @JoinColumn(name = "user_id", nullable = false, unique = true)
+  private User user;
 
-  public UserStatus(UUID userId, Instant lastActiveAt) {
-    this();
-    this.id = userId;
-    this.userId = userId;
-    this.lastActiveAt = lastActiveAt;
-    this.online = isOnline();
-  }
 
-  // Setter
-  public void update(Instant newLastActiveAt) {
-    if (newLastActiveAt != null && !newLastActiveAt.equals(this.lastActiveAt)) {
-      this.lastActiveAt = newLastActiveAt;
-      this.updatedAt = Instant.now();
-      this.online = isOnline();
-    }
+  public void update() {
+    this.lastActiveAt = Instant.now();
   }
 
   public boolean isOnline() {

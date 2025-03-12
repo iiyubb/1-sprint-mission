@@ -1,42 +1,34 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
 
 @Getter
-public class ReadStatus {
+@Entity
+@Table(name = "read_statuses")
+public class ReadStatus extends BaseUpdatableEntity {
 
-  private UUID id;
-  private Instant createdAt;
+  @ManyToOne
+  @JoinColumn(name = "user_id", unique = true)
+  private User user;
 
-  private Instant updatedAt;
-  private UUID userId;
-  private UUID channelId;
+  @ManyToOne
+  @JoinColumn(name = "channel_id", unique = true)
+  private Channel channel;
+
+  @Column(nullable = false)
   private Instant lastReadAt;
 
-  // 생성자
-  protected ReadStatus() {
-    this.id = UUID.randomUUID();
-    this.createdAt = Instant.now();
-  }
 
-  public ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {
-    this();
-    this.userId = userId;
-    this.channelId = channelId;
-    this.lastReadAt = lastReadAt;
-  }
-
-  // Setter
-  public void update(Instant newLastReadAt) {
-    if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
-      this.lastReadAt = newLastReadAt;
-      this.updatedAt = Instant.now();
-    }
+  public void update() {
+    this.lastReadAt = Instant.now();
   }
 
 }

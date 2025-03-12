@@ -1,55 +1,40 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.time.Instant;
 import java.util.*;
 
 @Getter
-public class Channel {
+@Entity
+@Table(name = "channel")
+public class Channel extends BaseUpdatableEntity {
 
-  private UUID id;
-  private Instant createdAt;
+  @Enumerated(EnumType.STRING)
+  @NotNull
+  private ChannelType type;
 
-  private Instant updatedAt;
-  private String type;
   private String name;
   private String description;
-  private List<UUID> participantIds;
 
-  protected Channel() {
-    this.id = UUID.randomUUID();
-    this.createdAt = Instant.now();
-  }
-
-  public Channel(String name, String type, String description) {
-    this();
-    this.name = name;
-    this.type = type;
-    this.description = description;
-    this.participantIds = new ArrayList<>();
-  }
-
-  // Setter
   public void update(String newName, String newDescription) {
     if (newName != null && !newName.equals(this.name)) {
       this.name = newName;
-      this.updatedAt = Instant.now();
     }
     if (newDescription != null && !newDescription.equals(this.description)) {
       this.description = newDescription;
-      this.updatedAt = Instant.now();
     }
-  }
-
-  public void addParticipant(UUID userId) {
-    participantIds.add(userId);
-    this.updatedAt = Instant.now();
-  }
-
-  public void deleteParticipant(UUID userId) {
-    participantIds.remove(userId);
-    this.updatedAt = Instant.now();
   }
 
 }
