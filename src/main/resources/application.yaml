@@ -12,7 +12,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -32,11 +32,10 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-repository:
-  type: file     # jcf | file
-  user-file-path: classpath:data/User.json
-  channel-file-path: classpath:data/Channel.json
-  message-file-path: classpath:data/Message.json
-  user-status-file-path: classpath:data/UserStatus.json
-  read-status-file-path: classpath:data/ReadStatus.json
-  binary-content-file-path: classpath:data/BinaryContent.json
+discodeit:
+  repository:
+    type: file   # jcf | file
+  storage:
+    type: local
+    local:
+      root-path: data/binary

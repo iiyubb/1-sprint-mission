@@ -9,13 +9,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BinaryContentRepository extends JpaRepository<BinaryContent, UUID> {
 
+  BinaryContent save(BinaryContent binaryContent);
+
   boolean existsById(UUID contentId);
 
   Optional<BinaryContent> findById(UUID contentId);
-
-  Optional<BinaryContent> findByMessageId(UUID messageId);
-
-  Optional<BinaryContent> findByUserId(UUID userId);
 
   List<BinaryContent> findAllByIdIn(List<UUID> contentIds);
 

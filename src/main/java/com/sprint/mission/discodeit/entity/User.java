@@ -7,7 +7,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import lombok.NoArgsConstructor;
@@ -19,6 +21,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
+@EqualsAndHashCode(callSuper = true)
 public class User extends BaseUpdatableEntity {
 
   @Column(nullable = false, unique = true)
@@ -31,14 +34,20 @@ public class User extends BaseUpdatableEntity {
   private String password;
 
   @OneToOne(cascade = {CascadeType.ALL}, orphanRemoval = true)
-  @JoinColumn(name = "profile_id")
+  @JoinColumn(name = "profile")
   private BinaryContent profile;
 
   @OneToOne(mappedBy = "user", cascade = {CascadeType.ALL}, orphanRemoval = true)
   private UserStatus userStatus;
 
-  public void update(String newUsername, String newEmail, String newPassword,
-      BinaryContent newProfile) {
+  public User(String username, String email, String password) {
+    super();
+    this.username = username;
+    this.email = email;
+    this.password = password;
+  }
+
+  public void update(String newUsername, String newEmail, String newPassword) {
     if (newUsername == null) {
       throw new IllegalArgumentException("[error] 사용자 이름이 입력되지 않았습니다.");
     }
@@ -46,6 +55,7 @@ public class User extends BaseUpdatableEntity {
       throw new IllegalArgumentException("[error] 현재 사용자 이름과 동일합니다.");
     }
     this.username = newUsername;
+    this.updateUpdatedAt();
 
     if (newEmail == null) {
       throw new IllegalArgumentException("[error] 이메일이 입력되지 않았습니다.");
@@ -54,6 +64,7 @@ public class User extends BaseUpdatableEntity {
       throw new IllegalArgumentException("[error] 현재 이메일과 동일합니다.");
     }
     this.email = newEmail;
+    this.updateUpdatedAt();
 
     if (newPassword == null) {
       throw new IllegalArgumentException("[error] 비밀번호가 입력되지 않았습니다.");
@@ -62,7 +73,10 @@ public class User extends BaseUpdatableEntity {
       throw new IllegalArgumentException("[error] 현재 비밀번호와 동일합니다.");
     }
     this.password = newPassword;
+    this.updateUpdatedAt();
+  }
 
+  public void updateProfile(BinaryContent newProfile) {
     if (profile.getId() != null && newProfile.getId() == null) {
       System.out.println("사용자 프로필 사진이 삭제되었습니다.");
     }
@@ -70,6 +84,11 @@ public class User extends BaseUpdatableEntity {
       throw new IllegalArgumentException("[error] 현재 프로필 ID와 동일합니다.");
     } else {
       this.profile = newProfile;
+      this.updateUpdatedAt();
     }
+  }
+
+  public void updateUserStatus(UserStatus userStatus) {
+    this.userStatus = userStatus;
   }
 }

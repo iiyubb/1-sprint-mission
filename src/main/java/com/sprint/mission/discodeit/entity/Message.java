@@ -9,6 +9,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
+import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -22,16 +24,16 @@ import lombok.NoArgsConstructor;
 @Table(name = "message")
 public class Message extends BaseUpdatableEntity {
 
-  private String content;
+  @ManyToOne()
+  @JoinColumn(name = "author_id")
+  private User author;
 
   @ManyToOne()
   @JoinColumn(name = "channel_id")
   @NotNull
   private Channel channel;
 
-  @ManyToOne()
-  @JoinColumn(name = "author_id")
-  private User author;
+  private String content;
 
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinTable(
@@ -39,13 +41,32 @@ public class Message extends BaseUpdatableEntity {
       joinColumns = @JoinColumn(name = "message_id"),
       inverseJoinColumns = @JoinColumn(name = "attachment_id")
   )
-  @NotNull
-  private List<BinaryContent> attachments;
+  private List<BinaryContent> attachments = new ArrayList<>();
+
+  public Message(User author, Channel channel, String content) {
+    super();
+  }
 
   public void update(String newDetail) {
     if (!newDetail.equals(this.content)) {
       this.content = newDetail;
     }
+  }
+
+  public void addAttachment(BinaryContent attachment) {
+    if (attachment == null) {
+      throw new IllegalArgumentException(); // custom exception
+    }
+    this.attachments.add(attachment);
+    this.updateUpdatedAt();
+  }
+
+  public void deleteAttachment(BinaryContent attachment) {
+    if (attachment == null) {
+      throw new IllegalArgumentException();
+    }
+    this.attachments.remove(attachment);
+    this.updateUpdatedAt();
   }
 
 }

@@ -22,13 +22,12 @@ import java.time.Instant;
 @Table(name = "user_statuses")
 public class UserStatus extends BaseUpdatableEntity {
 
-  @NotNull
-  private Instant lastActiveAt;
-
   @OneToOne()
   @JoinColumn(name = "user_id", nullable = false, unique = true)
   private User user;
 
+  @NotNull
+  private Instant lastActiveAt;
 
   public void update() {
     this.lastActiveAt = Instant.now();

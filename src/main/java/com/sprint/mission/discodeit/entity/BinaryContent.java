@@ -4,28 +4,33 @@ import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "binary_contents")
+@Getter
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class BinaryContent extends BaseEntity {
 
-  @Column(nullable = false)
+  @Column(name = "file_name", nullable = false)
   private String fileName;
 
   @Column(nullable = false)
-  private long size;
+  private Long size;
 
-  @Column(nullable = false)
+  @Column(name = "content_type", nullable = false, length = 100)
   private String contentType;
 
-  @Column(nullable = false)
-  private byte[] bytes;
+  private BinaryContent(String fileName, long size, String contentType) {
+    this.fileName = fileName;
+    this.size = size;
+    this.contentType = contentType;
+  }
 
+  public static BinaryContent of(String fileName, long size, String contentType) {
+    return new BinaryContent(fileName, size, contentType);
+  }
 }

@@ -1,35 +1,40 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.core.io.Resource;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/binaryContents")
 @RequiredArgsConstructor
+@RequestMapping("/api/binaryContents")
 public class BinaryContentController {
 
   private final BinaryContentService binaryContentService;
+  private final BinaryContentStorage binaryContentStorage;
 
-  @GetMapping("/{binaryContentId}")
-  public ResponseEntity<BinaryContent> getBinaryContent(
-      @PathVariable("binaryContentId") UUID contentId) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(binaryContentService.find(contentId));
+  @GetMapping(value = "/{id}")
+  public ResponseEntity<BinaryContentDto> findBinaryContent(@PathVariable UUID id) {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(binaryContentService.findById(id));
   }
 
-  @GetMapping
-  public ResponseEntity<List<BinaryContent>> getAllBinaryContent(
-      @RequestBody List<UUID> contentIds) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(binaryContentService.findAllByIdIn(contentIds));
+  @GetMapping(value = "")
+  public ResponseEntity<List<BinaryContentDto>> findBinaryContents(
+      @RequestParam("binaryContentIds") List<UUID> binaryContentIdList) {
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(binaryContentService.findAllByIdIn(binaryContentIdList));
+  }
+
+  @GetMapping("{id}/download")
+  public ResponseEntity<Resource> getBinaryContent(@PathVariable UUID id) {
+    return binaryContentStorage.download(binaryContentService.findById(id));
   }
 }

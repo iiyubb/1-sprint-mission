@@ -19,10 +19,10 @@ import lombok.NoArgsConstructor;
 public class Channel extends BaseUpdatableEntity {
 
   private String name;
-  
+
   @Enumerated(EnumType.STRING)
   @NotNull
-  private ChannelType type;
+  private ChannelType channelType;
 
   private String description;
 
@@ -33,6 +33,14 @@ public class Channel extends BaseUpdatableEntity {
     if (newDescription != null && !newDescription.equals(this.description)) {
       this.description = newDescription;
     }
+  }
+
+  public boolean isPrivate() {
+    return this.channelType == ChannelType.PRIVATE;
+  }
+
+  public boolean isPublic() {
+    return this.channelType == ChannelType.PUBLIC;
   }
 
 }

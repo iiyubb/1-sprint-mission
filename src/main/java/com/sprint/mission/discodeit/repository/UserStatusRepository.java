@@ -14,4 +14,6 @@ public interface UserStatusRepository extends JpaRepository<UserStatus, UUID> {
 
   Optional<UserStatus> findByUserId(UUID userId);
 
+  void deleteByUserId(UUID userId);
+
 }
