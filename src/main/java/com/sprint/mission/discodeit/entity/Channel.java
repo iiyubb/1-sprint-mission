@@ -6,19 +6,24 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "channel")
 public class Channel extends BaseUpdatableEntity {
 
+  private String name;
+  
   @Enumerated(EnumType.STRING)
   @NotNull
   private ChannelType type;
 
-  private String name;
   private String description;
 
   public void update(String newName, String newDescription) {

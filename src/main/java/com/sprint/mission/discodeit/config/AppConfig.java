@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.repository.file.FileMessageRepository;
 import com.sprint.mission.discodeit.repository.file.FileReadStatusRepository;
 import com.sprint.mission.discodeit.repository.file.FileUserRepository;
 import com.sprint.mission.discodeit.repository.file.FileUserStatusRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,63 +16,39 @@ import java.nio.file.Path;
 public class AppConfig {
 
   @Bean
-  public Path userFilePath() {
-    return Path.of("src/main/java/com/sprint/mission/discodeit/data/User.json");
+  public FileUserRepository fileUserRepository(
+      @Value("${repository.user-file-path}") String path) {
+    return new FileUserRepository(Path.of(path));
   }
 
   @Bean
-  public FileUserRepository fileUserRepository(Path userFilePath) {
-    return new FileUserRepository(userFilePath);
+  public FileChannelRepository fileChannelRepository(
+      @Value("${repository.channel-file-path}") String path) {
+    return new FileChannelRepository(Path.of(path));
   }
 
   @Bean
-  public Path channelFilePath() {
-    return Path.of("src/main/java/com/sprint/mission/discodeit/data/Channel.json");
+  public FileMessageRepository fileMessageRepository(
+      @Value("${repository.message-file-path}") String path) {
+    return new FileMessageRepository(Path.of(path));
   }
 
   @Bean
-  public FileChannelRepository fileChannelRepository(Path channelFilePath) {
-    return new FileChannelRepository(channelFilePath);
+  public FileUserStatusRepository fileUserStatusRepository(
+      @Value("${repository.user-status-file-path}") String path) {
+    return new FileUserStatusRepository(Path.of(path));
   }
 
   @Bean
-  public Path messageFilePath() {
-    return Path.of("src/main/java/com/sprint/mission/discodeit/data/Message.json");
+  public FileReadStatusRepository fileReadStatusRepository(
+      @Value("${repository.read-status-file-path}") String path) {
+    return new FileReadStatusRepository(Path.of(path));
   }
 
   @Bean
-  public FileMessageRepository fileMessageRepository(Path messageFilePath) {
-    return new FileMessageRepository(messageFilePath);
-  }
-
-  @Bean
-  public Path userStatusFilePath() {
-    return Path.of("src/main/java/com/sprint/mission/discodeit/data/UserStatus.json");
-  }
-
-  @Bean
-  public FileUserStatusRepository fileUserStatusRepository(Path userStatusFilePath) {
-    return new FileUserStatusRepository(userStatusFilePath);
-  }
-
-  @Bean
-  public Path readStatusFilPath() {
-    return Path.of("src/main/java/com/sprint/mission/discodeit/data/ReadStatus.json");
-  }
-
-  @Bean
-  public FileReadStatusRepository fileReadStatusRepository(Path readStatusFilPath) {
-    return new FileReadStatusRepository(readStatusFilPath);
-  }
-
-  @Bean
-  public Path binaryContentFilePath() {
-    return Path.of("src/main/java/com/sprint/mission/discodeit/data/BinaryContent.json");
-  }
-
-  @Bean
-  public FileBinaryContentRepository fileBinaryContentRepository(Path binaryContentFilePath) {
-    return new FileBinaryContentRepository(binaryContentFilePath);
+  public FileBinaryContentRepository fileBinaryContentRepository(
+      @Value("${repository.binary-content-file-path}") String path) {
+    return new FileBinaryContentRepository(Path.of(path));
   }
 
 }

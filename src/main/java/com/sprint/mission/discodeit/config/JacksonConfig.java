@@ -7,7 +7,7 @@ import java.time.Instant;
 
 public class JacksonConfig {
 
-  public static void main(String[] args) {
+  public static void jacksonConfig(String[] args) {
     try {
       // ObjectMapper 생성
       ObjectMapper objectMapper = new ObjectMapper();

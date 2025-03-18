@@ -44,27 +44,10 @@ public class ChannelController {
         .body(privateChannel);
   }
 
-//  @GetMapping("/find/public/{id}")
-//  public ResponseEntity<PublicChannelDto> getPublicChannel(@PathVariable("id") UUID channelId) {
-//    Channel publicChannel = channelService.find(channelId);
-//    Instant lastMessageAt = getLastMessageAt(publicChannel.getId());
-//    return ResponseEntity
-//        .status(HttpStatus.OK)
-//        .body(PublicChannelDto.fromDomain(publicChannel, lastMessageAt));
-//  }
-//
-//  @GetMapping("/find/private/{id}")
-//  public ResponseEntity<PrivateChannelDto> getPrivateChannel(@PathVariable("id") UUID channelId) {
-//    Channel privateChannel = channelService.find(channelId);
-//    Instant lastMessageAt = getLastMessageAt(privateChannel.getId());
-//    return ResponseEntity.ok(PrivateChannelDto.fromDomain(privateChannel, lastMessageAt));
-//  }
-
   @GetMapping
   public ResponseEntity<List<ChannelDto>> getAllChannelByUserId(
       @RequestParam("userId") UUID userId) {
     List<Channel> channelList = channelService.findAllByUserId(userId);
-    System.out.println("channel list size !!!!!" + channelList.size());
 
     List<ChannelDto> channelDtos = channelList.stream()
         .map(channel -> {

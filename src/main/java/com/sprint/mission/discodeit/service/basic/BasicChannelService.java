@@ -29,10 +29,10 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   public Channel create(CreatePublicChannelRequest request) {
-    Channel channel = new Channel(request.name(), ChannelType.PUBLIC.name(), request.description());
+    Channel channel = new Channel(request.name(), ChannelType.PUBLIC, request.description());
     request.participants().forEach(channel::addParticipant);
     channel.getParticipantIds().stream()
-        .map(userId -> new ReadStatus(userId, channel.getId(), Instant.MIN))
+        .map(userId -> new ReadStatus(userId, channel.getId(), channel.getCreatedAt()))
         .forEach(readStatusRepo::save);
     return channelRepo.save(channel);
   }
@@ -43,7 +43,7 @@ public class BasicChannelService implements ChannelService {
     channel.addParticipant(request.participants().get(0));
     channel.addParticipant(request.participants().get(1));
     channel.getParticipantIds().stream()
-        .map(userId -> new ReadStatus(userId, channel.getId(), Instant.MIN))
+        .map(userId -> new ReadStatus(userId, channel.getId(), channel.getCreatedAt()))
         .forEach(readStatusRepo::save);
     return channelRepo.save(channel);
   }
@@ -84,7 +84,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   public void delete(UUID channelId) {
     channelRepo.deleteById(channelId);
-    messageRepo.deleteByChannelId(channelId);
+    messageRepo.deleteById(channelId);
     readStatusRepo.deleteByChannelId(channelId);
   }
 

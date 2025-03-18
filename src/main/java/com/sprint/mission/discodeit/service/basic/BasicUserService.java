@@ -42,7 +42,7 @@ public class BasicUserService implements UserService {
     User createdUser = userRepo.save(user);
 
     Instant now = Instant.now();
-    UserStatus userStatus = new UserStatus(createdUser.getId(), now);
+    UserStatus userStatus = new UserStatus(createdUser, now);
     userStatusRepo.save(userStatus);
 
     return createdUser;
@@ -68,16 +68,15 @@ public class BasicUserService implements UserService {
     BinaryContent binaryContent = binaryContentRepo.save(new BinaryContent(fileName, bytes.length,
         contentType, bytes));
 
-    UUID profileId = binaryContent.getId();
-
     String password = createUserRequest.password();
 
     User user = new User(createUserRequest.username(), createUserRequest.email(), password,
-        profileId);
+        binaryContent
+    );
     User createdUser = userRepo.save(user);
 
     Instant now = Instant.now();
-    UserStatus userStatus = new UserStatus(createdUser.getId(), now);
+    UserStatus userStatus = new UserStatus(createdUser, now);
     userStatusRepo.save(userStatus);
 
     return createdUser;
@@ -135,10 +134,10 @@ public class BasicUserService implements UserService {
         (long) profileCreateRequest.bytes().length,
         profileCreateRequest.contentType(), profileCreateRequest.bytes());
 
-    UUID profileId = binaryContentRepo.save(binaryContent).getId();
+    BinaryContent profile = binaryContentRepo.save(binaryContent);
 
     String newPassword = request.newPassword();
-    user.update(newUsername, newEmail, newPassword, profileId);
+    user.update(newUsername, newEmail, newPassword, profile);
 
     return userRepo.save(user);
   }
@@ -148,8 +147,8 @@ public class BasicUserService implements UserService {
     User user = userRepo.findById(userId)
         .orElseThrow(() -> new NoSuchElementException("[error] 존재하지 않는 User ID입니다."));
 
-    Optional.ofNullable(user.getProfileId())
-        .ifPresent(binaryContentRepo::deleteById);
+    Optional.ofNullable(user.getProfile())
+        .ifPresent(profile -> binaryContentRepo.deleteById(profile.getId()));
     userStatusRepo.deleteByUserId(userId);
     userRepo.deleteById(userId);
     System.out.println("[삭제 완료]");
