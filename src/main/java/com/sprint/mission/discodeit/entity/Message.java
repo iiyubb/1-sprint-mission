@@ -1,45 +1,72 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
+import java.util.ArrayList;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class Message {
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "message")
+public class Message extends BaseUpdatableEntity {
 
-  private UUID id;
-  private Instant createdAt;
+  @ManyToOne()
+  @JoinColumn(name = "author_id")
+  private User author;
 
-  private Instant updatedAt;
+  @ManyToOne()
+  @JoinColumn(name = "channel_id")
+  @NotNull
+  private Channel channel;
+
   private String content;
-  private UUID channelId;
-  private UUID authorId;
-  private List<UUID> attachmentIds;
 
-  // 생성자
-  protected Message() {
-    this.id = UUID.randomUUID();
-    this.createdAt = Instant.now();
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinTable(
+      name = "message_attachments",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "attachment_id")
+  )
+  private List<BinaryContent> attachments = new ArrayList<>();
+
+  public Message(User author, Channel channel, String content) {
+    super();
   }
 
-  public Message(UUID authorId, UUID channelId, String content, List<UUID> attachmentIds) {
-    this();
-    this.authorId = authorId;
-    this.channelId = channelId;
-    this.content = content;
-    this.attachmentIds = attachmentIds;
-  }
-
-  // Setter
   public void update(String newDetail) {
-    if (newDetail != null && !newDetail.equals(this.content)) {
+    if (!newDetail.equals(this.content)) {
       this.content = newDetail;
-      this.updatedAt = Instant.now();
     }
+  }
+
+  public void addAttachment(BinaryContent attachment) {
+    if (attachment == null) {
+      throw new IllegalArgumentException(); // custom exception
+    }
+    this.attachments.add(attachment);
+    this.updateUpdatedAt();
+  }
+
+  public void deleteAttachment(BinaryContent attachment) {
+    if (attachment == null) {
+      throw new IllegalArgumentException();
+    }
+    this.attachments.remove(attachment);
+    this.updateUpdatedAt();
   }
 
 }

@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.dto.channel;
 
+import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -9,20 +11,20 @@ import java.util.UUID;
 
 @Builder
 public record ChannelDto(UUID id,
-                         String type,
+                         ChannelType type,
                          String name,
                          String description,
-                         List<UUID> participantIds,
+                         List<UserDto> participants,
                          Instant lastMessageAt) {
 
-  public static ChannelDto fromDomain(Channel channel, Instant lastMessageAt) {
+  public ChannelDto fromDomain(Channel channel, Instant lastMessageAt) {
     return ChannelDto.builder()
         .id(channel.getId())
-        .type(channel.getType())
+        .type(channel.getChannelType())
         .name(channel.getName())
         .description(channel.getDescription())
-        .participantIds(channel.getParticipantIds())
         .lastMessageAt(lastMessageAt)
+        .participants(participants)
         .build();
   }
 
