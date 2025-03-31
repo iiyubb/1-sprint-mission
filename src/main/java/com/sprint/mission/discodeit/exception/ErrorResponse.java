@@ -30,7 +30,6 @@ public class ErrorResponse {
     this.details = details;
     this.exceptionType = errorCode.name();
     this.status = status.value();
-
   }
-  
+
 }
