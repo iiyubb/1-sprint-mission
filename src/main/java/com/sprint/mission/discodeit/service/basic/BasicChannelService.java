@@ -53,10 +53,15 @@ public class BasicChannelService implements ChannelService {
     Channel channel = new Channel(ChannelType.PRIVATE, null, null);
     log.info("[개인 채널 생성 시도] 채널 ID: {}", channel.getId());
 
+    if (channel.getId() != null && channelRepository.existsById(channel.getId())) {
+      throw new IllegalStateException("이미 존재하는 Channel ID입니다.");
+    }
+
     channelRepository.save(channel);
     log.info("[개인 채널 생성 성공] 채널 ID: {}", channel.getId());
 
-    List<ReadStatus> readStatuses = userRepository.findAllById(request.participantIds()).stream()
+    List<ReadStatus> readStatuses = userRepository.findAllById(request.participantIds())
+        .stream()
         .map(user -> new ReadStatus(user, channel, channel.getCreatedAt()))
         .toList();
     log.info("[읽음 정보 생성 시도] 읽음 정보 개수: {}", readStatuses.size());
