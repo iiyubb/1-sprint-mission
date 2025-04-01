@@ -40,7 +40,7 @@ public interface UserApi {
       @Parameter(
           description = "User 생성 정보",
           content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
-      ) @Valid UserCreateRequest userCreateRequest,
+      ) @Valid @RequestPart UserCreateRequest userCreateRequest,
       @Parameter(
           description = "User 프로필 이미지",
           content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)

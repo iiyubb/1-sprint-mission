@@ -2,8 +2,10 @@ package com.sprint.mission.discodeit.exception;
 
 import java.time.Instant;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+@AllArgsConstructor
 public class ErrorResponse {
 
   private final Instant timestamp;

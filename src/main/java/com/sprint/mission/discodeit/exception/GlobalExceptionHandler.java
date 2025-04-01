@@ -12,8 +12,10 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UsernameAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
+import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.View;
@@ -133,6 +135,25 @@ public class GlobalExceptionHandler {
         .body(errorResponse);
   }
 
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleException(MethodArgumentNotValidException ex) {
+    String error = ex.getBindingResult().getFieldErrors().stream()
+        .findFirst()
+        .map(err -> err.getDefaultMessage() + " " + err.getRejectedValue())
+        .toString();
+
+    ErrorResponse errorResponse = new ErrorResponse(
+        Instant.now(),
+        HttpStatus.BAD_REQUEST.getReasonPhrase(),
+        error,
+        null,
+        ex.getClass().getSimpleName(),
+        HttpStatus.BAD_REQUEST.value());
+
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(errorResponse);
+  }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<String> handleException(Exception e) {
@@ -141,4 +162,5 @@ public class GlobalExceptionHandler {
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(e.getMessage());
   }
+
 }
