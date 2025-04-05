@@ -157,7 +157,7 @@ public class BasicUserService implements UserService {
   public void delete(UUID userId) {
     log.info("[유저 삭제 시도] 유저 ID: {}", userId);
 
-    if (userRepository.existsById(userId)) {
+    if (!userRepository.existsById(userId)) {
       log.error("[유저 조회 실패] 해당 유저를 찾을 수 없습니다. 유저 ID: {}", userId);
       throw new UserNotFoundException();
     }

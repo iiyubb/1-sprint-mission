@@ -7,8 +7,11 @@ import com.sprint.mission.discodeit.dto.request.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.channel.ChannelNameAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -54,7 +57,14 @@ public class BasicChannelService implements ChannelService {
     log.info("[개인 채널 생성 시도] 채널 ID: {}", channel.getId());
 
     if (channel.getId() != null && channelRepository.existsById(channel.getId())) {
-      throw new IllegalStateException("이미 존재하는 Channel ID입니다.");
+      throw new ChannelNameAlreadyExistsException();
+    }
+
+    List<User> participants = userRepository.findAllById(request.participantIds());
+
+    if (participants.size() != request.participantIds().size()) {
+      log.error("creat private failed: 사용자 수={}", request.participantIds().size());
+      throw new UserNotFoundException();
     }
 
     channelRepository.save(channel);
