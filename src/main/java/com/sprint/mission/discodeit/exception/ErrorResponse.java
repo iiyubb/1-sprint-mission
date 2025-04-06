@@ -3,8 +3,10 @@ package com.sprint.mission.discodeit.exception;
 import java.time.Instant;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+@Getter
 @AllArgsConstructor
 public class ErrorResponse {
 

@@ -36,22 +36,22 @@ import org.springframework.test.context.ActiveProfiles;
 public class MessageRepositoryTest {
 
   @Autowired
-  MessageRepository messageRepository;
+  private MessageRepository messageRepository;
 
   @Autowired
-  BinaryContentRepository binaryContentRepository;
+  private BinaryContentRepository binaryContentRepository;
 
   @Autowired
-  UserRepository userRepository;
+  private UserRepository userRepository;
 
   @Autowired
-  UserStatusRepository userStatusRepository;
+  private UserStatusRepository userStatusRepository;
 
   @Autowired
-  ChannelRepository channelRepository;
+  private ChannelRepository channelRepository;
 
   @Autowired
-  EntityManager entityManager;
+  private EntityManager entityManager;
 
   @Test
   @DisplayName("채널의 모든 메세지 읽기 - 성공")

@@ -20,7 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 public class ChannelRepositoryTest {
 
   @Autowired
-  ChannelRepository channelRepository;
+  private ChannelRepository channelRepository;
 
   @Test
   @DisplayName("유저가 속한 채널 모두 찾기 - 성공")
