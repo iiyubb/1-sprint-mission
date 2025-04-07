@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -11,6 +12,7 @@ import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.exception.GlobalExceptionHandler;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.ChannelService;
 import java.time.Instant;
 import java.util.List;
@@ -71,4 +73,59 @@ public class ChannelControllerTest {
         .andExpect(jsonPath("$.type").value(ChannelType.PRIVATE.name()));
   }
 
+  @Test
+  @DisplayName("POST /channels - 실패 (존재하지 않는 유저)")
+  void createPrivateChannelFail_UserNotFound() throws Exception {
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+
+    when(channelService.create(any(PrivateChannelCreateRequest.class)))
+        .thenThrow(new UserNotFoundException());
+
+    mockMvc.perform(post("/api/channels/private")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(String.format("""
+                {
+                  "participantIds" : ["%s", "%s"]
+                }""", id1, id2)))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.message").value("유저를 찾을 수 없습니다."));
+  }
+
+  @Test
+  @DisplayName("GET /channels - 성공")
+  void findAllChannelsByUserIdSuccess() throws Exception {
+    UUID userId = UUID.randomUUID();
+    UUID channelId1 = UUID.randomUUID();
+    UUID channelId2 = UUID.randomUUID();
+
+    ChannelDto publicChannel = new ChannelDto(channelId1, ChannelType.PUBLIC, null, null, List.of(),
+        Instant.now());
+    ChannelDto privateChannel = new ChannelDto(channelId2, ChannelType.PRIVATE, null, null,
+        List.of(), Instant.now());
+
+    when(channelService.findAllByUserId(userId)).thenReturn(List.of(publicChannel, privateChannel));
+
+    mockMvc.perform(get("/api/channels")
+            .param("userId", userId.toString())
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].type").value("PUBLIC"))
+        .andExpect(jsonPath("$[1].type").value("PRIVATE"));
+  }
+
+  @DisplayName("GET /channels} - 실패 (유저를 찾을 수 없음)")
+  @Test
+  void findAllChannelsByUserIdFail_UserNotFound() throws Exception {
+    UUID userId = UUID.randomUUID();
+
+    when(channelService.findAllByUserId(userId)).thenThrow(new UserNotFoundException());
+
+    mockMvc.perform(get("/api/channels")
+            .param("userId", userId.toString())
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.message").value("유저를 찾을 수 없습니다."));
+  }
 }
