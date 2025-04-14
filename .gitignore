@@ -6,6 +6,7 @@ src/main/java/com/sprint/mission/discodeit/data
 .github
 build/
 .env
+discodeit.env
 
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
