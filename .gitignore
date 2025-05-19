@@ -7,7 +7,7 @@ src/main/java/com/sprint/mission/discodeit/data
 build/
 .env
 discodeit.env
-.discodeit
+.discodeit/storage
 
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
