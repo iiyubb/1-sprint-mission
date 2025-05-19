@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.config;
 
-import jakarta.servlet.http.Cookie;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
