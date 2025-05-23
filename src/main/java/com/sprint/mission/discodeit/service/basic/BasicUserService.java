@@ -165,6 +165,7 @@ public class BasicUserService implements UserService {
     log.info("사용자 권한 수정 시작: id={}", request.userId());
 
     user.updateRole(request.newRole());
+    forceLogoutUser(user.getUsername());
     log.info("사용자 권한 수정 완료: id={}", request.userId());
     return userMapper.toDto(user);
   }
@@ -202,5 +203,25 @@ public class BasicUserService implements UserService {
           }
           return false;
         });
+  }
+
+  private void forceLogoutUser(String username) {
+    log.debug("사용자 강제 로그아웃 시작: username = {}", username);
+
+    sessionRegistry.getAllPrincipals().stream()
+        .filter(principal -> principal instanceof CustomUserDetails)
+        .map(principal -> (CustomUserDetails) principal)
+        .filter(userDetails -> userDetails.getUsername().equals(username))
+        .forEach(userDetails -> {
+          // 해당 사용자의 모든 세션을 가져와서 만료시킴
+          sessionRegistry.getAllSessions(userDetails, false)
+              .forEach(sessionInfo -> {
+                log.info("세션 만료 처리: username = {}, sessionId = {}", username,
+                    sessionInfo.getSessionId());
+                sessionInfo.expireNow();
+              });
+        });
+
+    log.info("사용자 강제 로그아웃 완료: username={}", username);
   }
 }
