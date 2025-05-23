@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
@@ -131,5 +132,23 @@ public class BasicMessageService implements MessageService {
     }
     messageRepository.deleteById(messageId);
     log.info("메시지 삭제 완료: id={}", messageId);
+  }
+
+  public boolean isMessageAuthor(UUID messageId, String currentUsername) {
+    Message message = messageRepository.findById(messageId)
+        .orElseThrow(() -> MessageNotFoundException.withId(messageId));
+
+    return message.getAuthor().getUsername().equals(currentUsername);
+  }
+
+  public boolean isMessageAuthorOrAdmin(UUID messageId, String currentUsername) {
+    Message message = messageRepository.findById(messageId)
+        .orElseThrow(() -> MessageNotFoundException.withId(messageId));
+
+    User user = userRepository.findByUsername(currentUsername)
+        .orElseThrow(() -> UserNotFoundException.withUsername(currentUsername));
+
+    return message.getAuthor().getUsername().equals(currentUsername)
+        || user.getRole().name().equals(Role.ADMIN.name());
   }
 }

@@ -54,7 +54,7 @@ public class BasicReadStatusService implements ReadStatusService {
     ReadStatus readStatus = new ReadStatus(user, channel, lastReadAt);
     readStatusRepository.save(readStatus);
 
-    log.info("읽음 상태 생성 완료: id={}, userId={}, channelId={}", 
+    log.info("읽음 상태 생성 완료: id={}, userId={}, channelId={}",
         readStatus.getId(), userId, channelId);
     return readStatusMapper.toDto(readStatus);
   }
@@ -83,11 +83,11 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
     log.debug("읽음 상태 수정 시작: id={}, newLastReadAt={}", readStatusId, request.newLastReadAt());
-    
+
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
         .orElseThrow(() -> ReadStatusNotFoundException.withId(readStatusId));
     readStatus.update(request.newLastReadAt());
-    
+
     log.info("읽음 상태 수정 완료: id={}", readStatusId);
     return readStatusMapper.toDto(readStatus);
   }
@@ -101,5 +101,11 @@ public class BasicReadStatusService implements ReadStatusService {
     }
     readStatusRepository.deleteById(readStatusId);
     log.info("읽음 상태 삭제 완료: id={}", readStatusId);
+  }
+
+  public boolean isOwner(ReadStatusCreateRequest request, String username) {
+    User user = userRepository.findById(request.userId())
+        .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
+    return user.getUsername().equals(username);
   }
 }

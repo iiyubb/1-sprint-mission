@@ -6,12 +6,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.naming.AuthenticationException;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 
-@AllArgsConstructor
 @RequiredArgsConstructor
 public class JsonAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
