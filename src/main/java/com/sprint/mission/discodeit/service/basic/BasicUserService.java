@@ -20,8 +20,11 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -71,7 +74,6 @@ public class BasicUserService implements UserService {
         .orElse(null);
 
     String password = passwordEncoder.encode(userCreateRequest.password());
-
     User user = new User(username, email, password, nullableProfile);
 
     userRepository.save(user);
@@ -86,30 +88,30 @@ public class BasicUserService implements UserService {
         .map(userMapper::toDto)
         .orElseThrow(() -> UserNotFoundException.withId(userId));
 
-    boolean isOnline = isUserOnline(userDto.username());
-
     log.info("사용자 조회 완료: id={}", userId);
-    return new UserDto(
-        userDto.id(),
-        userDto.username(),
-        userDto.email(),
-        userDto.profile(),
-        isOnline,
-        userDto.role()
-    );
+    return userDto;
   }
 
   @Override
   public List<UserDto> findAll() {
     log.debug("모든 사용자 조회 시작");
+
+    Set<UUID> onlineUserIds = sessionRegistry.getAllPrincipals().stream()
+        .filter(principal -> !sessionRegistry.getAllSessions(principal, false).isEmpty())
+        .filter(principal -> principal instanceof CustomUserDetails)
+        .map(principal -> ((CustomUserDetails) principal).getUserDto().id())
+        .collect(Collectors.toSet());
+
     List<UserDto> userDtos = userRepository.findAll()
         .stream()
-        .map(userMapper::toDto)
+        .map(user -> userMapper.toDto(user, onlineUserIds.contains(user.getId())))
         .toList();
+
     log.info("모든 사용자 조회 완료: 총 {}명", userDtos.size());
     return userDtos;
   }
 
+  @PreAuthorize("hasRole('ADMIN') or principal.userDto.id == #userId")
   @Transactional
   @Override
   public UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
@@ -147,29 +149,14 @@ public class BasicUserService implements UserService {
         })
         .orElse(null);
 
-    String newPassword = userUpdateRequest.newPassword();
+    String newPassword = passwordEncoder.encode(userUpdateRequest.newPassword());
     user.update(newUsername, newEmail, newPassword, nullableProfile);
 
     log.info("사용자 수정 완료: id={}", userId);
     return userMapper.toDto(user);
   }
 
-  @Transactional
-  @Override
-  public UserDto updateRole(UserRoleUpdateRequest request) {
-
-    authService.requireRole(Role.ADMIN);
-
-    User user = userRepository.findById(request.userId())
-        .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
-    log.info("사용자 권한 수정 시작: id={}", request.userId());
-
-    user.updateRole(request.newRole());
-    forceLogoutUser(user.getUsername());
-    log.info("사용자 권한 수정 완료: id={}", request.userId());
-    return userMapper.toDto(user);
-  }
-
+  @PreAuthorize("hasRole('ADMIN') or principal.userDto.id == #userId")
   @Transactional
   @Override
   public void delete(UUID userId) {
@@ -192,36 +179,5 @@ public class BasicUserService implements UserService {
 
     return targetUser.getId().equals(currentUser.getId()) ||
         currentUser.getRole().name().equals(Role.ADMIN.name());
-  }
-
-  @Override
-  public boolean isUserOnline(String username) {
-    return sessionRegistry.getAllPrincipals().stream()
-        .anyMatch(principal -> {
-          if (principal instanceof CustomUserDetails) {
-            return ((CustomUserDetails) principal).getUsername().equals(username);
-          }
-          return false;
-        });
-  }
-
-  private void forceLogoutUser(String username) {
-    log.debug("사용자 강제 로그아웃 시작: username = {}", username);
-
-    sessionRegistry.getAllPrincipals().stream()
-        .filter(principal -> principal instanceof CustomUserDetails)
-        .map(principal -> (CustomUserDetails) principal)
-        .filter(userDetails -> userDetails.getUsername().equals(username))
-        .forEach(userDetails -> {
-          // 해당 사용자의 모든 세션을 가져와서 만료시킴
-          sessionRegistry.getAllSessions(userDetails, false)
-              .forEach(sessionInfo -> {
-                log.info("세션 만료 처리: username = {}, sessionId = {}", username,
-                    sessionInfo.getSessionId());
-                sessionInfo.expireNow();
-              });
-        });
-
-    log.info("사용자 강제 로그아웃 완료: username={}", username);
   }
 }

@@ -36,14 +36,14 @@ public class User extends BaseUpdatableEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  @Builder.Default
-  private Role role = Role.USER;
+  private Role role;
 
   public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
     this.password = password;
     this.profile = profile;
+    this.role = Role.USER;
   }
 
   public void update(String newUsername, String newEmail, String newPassword,

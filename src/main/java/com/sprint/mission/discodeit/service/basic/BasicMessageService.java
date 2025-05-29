@@ -28,6 +28,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +112,7 @@ public class BasicMessageService implements MessageService {
     return pageResponseMapper.fromSlice(slice, nextCursor);
   }
 
+  @PreAuthorize("principal.userDto.id == @basicMessageService.find(#messageId).author.id")
   @Transactional
   @Override
   public MessageDto update(UUID messageId, MessageUpdateRequest request) {
@@ -123,6 +125,7 @@ public class BasicMessageService implements MessageService {
     return messageMapper.toDto(message);
   }
 
+  @PreAuthorize("hasRole('ADMIN') or principal.userDto.id == @basicMessageService.find(#messageId).author.id")
   @Transactional
   @Override
   public void delete(UUID messageId) {
@@ -132,23 +135,5 @@ public class BasicMessageService implements MessageService {
     }
     messageRepository.deleteById(messageId);
     log.info("메시지 삭제 완료: id={}", messageId);
-  }
-
-  public boolean isMessageAuthor(UUID messageId, String currentUsername) {
-    Message message = messageRepository.findById(messageId)
-        .orElseThrow(() -> MessageNotFoundException.withId(messageId));
-
-    return message.getAuthor().getUsername().equals(currentUsername);
-  }
-
-  public boolean isMessageAuthorOrAdmin(UUID messageId, String currentUsername) {
-    Message message = messageRepository.findById(messageId)
-        .orElseThrow(() -> MessageNotFoundException.withId(messageId));
-
-    User user = userRepository.findByUsername(currentUsername)
-        .orElseThrow(() -> UserNotFoundException.withUsername(currentUsername));
-
-    return message.getAuthor().getUsername().equals(currentUsername)
-        || user.getRole().name().equals(Role.ADMIN.name());
   }
 }

@@ -86,12 +86,12 @@ public class ChannelController implements ChannelApi {
       Authentication authentication) {
 
     UUID actualUserId;
-    
+
     if (userId == null || "undefined".equals(userId) || userId.trim().isEmpty()) {
       // 현재 인증된 사용자 사용
       log.debug("userId가 null 또는 undefined이므로 현재 사용자 ID 사용");
       CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-      actualUserId = userDetails.getUser().getId();
+      actualUserId = userDetails.getUserDto().id();
     } else {
       try {
         actualUserId = UUID.fromString(userId);
@@ -100,7 +100,7 @@ public class ChannelController implements ChannelApi {
         // 유효하지 않은 UUID인 경우 현재 사용자 사용
         log.warn("유효하지 않은 UUID 형식: {}. 현재 사용자 ID 사용", userId);
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        actualUserId = userDetails.getUser().getId();
+        actualUserId = userDetails.getUserDto().id();
       }
     }
 

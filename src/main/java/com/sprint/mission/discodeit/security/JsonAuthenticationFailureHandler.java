@@ -1,12 +1,12 @@
 package com.sprint.mission.discodeit.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.discodeit.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 
@@ -19,10 +19,9 @@ public class JsonAuthenticationFailureHandler implements AuthenticationFailureHa
   public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
       AuthenticationException exception) throws IOException {
 
-    Map<String, String> errorResponse = new HashMap();
-    errorResponse.put("error", "Authentication failed");
-    errorResponse.put("message", exception.getMessage());
-
-    objectMapper.writeValue(response.getWriter(), errorResponse);
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    ErrorResponse errorResponse = new ErrorResponse(exception, HttpServletResponse.SC_UNAUTHORIZED);
+    response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
   }
 }

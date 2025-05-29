@@ -1,17 +1,14 @@
 package com.sprint.mission.discodeit.service;
 
 
+import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import org.springframework.security.core.Authentication;
 
 public interface AuthService {
 
-  Authentication getCurrentAuthentication();
+  UserDto initAdmin();
 
-  String getCurrentUsername();
-
-  boolean hasRole(Role role);
-
-  void requireRole(Role requiredRole);
-
+  UserDto updateRole(UserRoleUpdateRequest request);
 }
