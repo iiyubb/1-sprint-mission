@@ -64,6 +64,51 @@ CREATE TABLE read_statuses
     UNIQUE (user_id, channel_id)
 );
 
+CREATE TABLE jwt_sessions
+(
+    id                       UUID PRIMARY KEY,
+    user_id                  UUID                     NOT NULL,
+    access_token             TEXT                     NOT NULL,
+    refresh_token            TEXT                     NOT NULL,
+    access_token_expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    refresh_token_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active                BOOLEAN                  NOT NULL DEFAULT true,
+    created_at               TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at               TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- 외래키 제약조건
+    CONSTRAINT fk_jwt_sessions_user_id
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- 성능 최적화를 위한 인덱스들
+CREATE INDEX idx_jwt_sessions_user_id ON jwt_sessions (user_id);
+CREATE INDEX idx_jwt_sessions_access_token ON jwt_sessions (access_token);
+CREATE INDEX idx_jwt_sessions_refresh_token ON jwt_sessions (refresh_token);
+CREATE INDEX idx_jwt_sessions_is_active ON jwt_sessions (is_active);
+CREATE INDEX idx_jwt_sessions_expires_at ON jwt_sessions (access_token_expires_at, refresh_token_expires_at);
+
+-- 사용자당 하나의 활성 세션만 허용하는 부분 유니크 인덱스
+CREATE UNIQUE INDEX idx_jwt_sessions_user_active
+    ON jwt_sessions (user_id)
+    WHERE is_active = true;
+
+-- updated_at 자동 업데이트를 위한 트리거 함수
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- updated_at 자동 업데이트 트리거
+CREATE TRIGGER update_jwt_sessions_updated_at
+    BEFORE UPDATE
+    ON jwt_sessions
+    FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
 
 -- 제약 조건
 -- User (1) -> BinaryContent (1)

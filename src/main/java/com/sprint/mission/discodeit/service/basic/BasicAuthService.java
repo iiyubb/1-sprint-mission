@@ -4,11 +4,14 @@ import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.security.InvalidTokenException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.CustomUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtService;
 import com.sprint.mission.discodeit.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,7 @@ public class BasicAuthService implements AuthService {
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
   private final SessionRegistry sessionRegistry;
+  private final JwtService jwtService;
 
   @Value("${ADMIN_USERNAME}")
   private String username;
@@ -63,7 +67,14 @@ public class BasicAuthService implements AuthService {
     UUID userId = request.userId();
     User user = userRepository.findById(userId)
         .orElseThrow(() -> UserNotFoundException.withId(userId));
+
+    Role oldRole = user.getRole();
     user.updateRole(request.newRole());
+
+    if (!oldRole.equals(request.newRole())) {
+      log.info("User role changed from {} to {} for user {}, forcing logout", oldRole,
+          request.newRole(), user.getUsername());
+    }
 
     sessionRegistry.getAllPrincipals().stream()
         .filter(principal -> ((CustomUserDetails) principal).getUserDto().id().equals(userId))
@@ -74,6 +85,9 @@ public class BasicAuthService implements AuthService {
           log.debug("활성화 세션: {}", activeSessions.size());
           activeSessions.forEach(SessionInformation::expireNow);
         });
+
+    jwtService.invalidateAllUserSessions(userId);
+    log.info("All JWT sessions invalidated for user: {}", user.getUsername());
 
     return userMapper.toDto(user);
   }

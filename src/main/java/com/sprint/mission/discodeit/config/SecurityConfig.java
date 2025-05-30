@@ -2,11 +2,11 @@ package com.sprint.mission.discodeit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.Role;
-import com.sprint.mission.discodeit.security.CustomSessionInformationExpiredStrategy;
 import com.sprint.mission.discodeit.security.CustomUserDetailsService;
 import com.sprint.mission.discodeit.security.JsonUsernamePasswordAuthenticationFilter;
 import com.sprint.mission.discodeit.security.SecurityMatchers;
 import com.sprint.mission.discodeit.security.SessionRegistryLogoutHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtAuthenticationFilter;
 import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +24,20 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Slf4j
 @Configuration
@@ -51,35 +54,38 @@ public class SecurityConfig {
       ObjectMapper objectMapper,
       AuthenticationManager authenticationManager,
       SessionRegistry sessionRegistry,
-      PersistentTokenBasedRememberMeServices rememberMeServices) throws Exception {
+      PersistentTokenBasedRememberMeServices rememberMeServices,
+      JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
 
     http
         .authenticationManager(authenticationManager)
         .authorizeHttpRequests(authorize -> authorize.requestMatchers(
                     SecurityMatchers.NON_API,
                     SecurityMatchers.GET_CSRF_TOKEN,
-                    SecurityMatchers.SIGN_UP
+                    SecurityMatchers.SIGN_UP,
+                    SecurityMatchers.LOGIN
                 ).permitAll()
                 .anyRequest().hasRole(Role.USER.name())
         )
-        .csrf(csrf -> csrf.ignoringRequestMatchers(SecurityMatchers.LOGIN, SecurityMatchers.SIGN_UP,
-            SecurityMatchers.LOGOUT))
+        .csrf(csrf ->
+            csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers(
+                    SecurityMatchers.LOGIN,
+                    SecurityMatchers.SIGN_UP,
+                    SecurityMatchers.LOGOUT))
         .logout(logout ->
             logout
                 .logoutRequestMatcher(SecurityMatchers.LOGOUT)
                 .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler())
                 .addLogoutHandler(new SessionRegistryLogoutHandler(sessionRegistry))
         )
+        .sessionManagement(session ->
+            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .with(new JsonUsernamePasswordAuthenticationFilter.Configurer(objectMapper),
             Customizer.withDefaults())
-        .sessionManagement(session ->
-            session
-                .sessionFixation().migrateSession()
-                .maximumSessions(1)
-                .maxSessionsPreventsLogin(false)
-                .sessionRegistry(sessionRegistry)
-                .expiredSessionStrategy(new CustomSessionInformationExpiredStrategy(objectMapper))
-        )
         .rememberMe(rememberMe -> rememberMe.rememberMeServices(rememberMeServices));
 
     return http.build();
