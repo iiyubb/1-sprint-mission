@@ -14,6 +14,8 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.CustomUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtService;
+import com.sprint.mission.discodeit.security.jwt.JwtSessionManager;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
@@ -41,8 +43,8 @@ public class BasicUserService implements UserService {
   private final UserMapper userMapper;
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
-  private final AuthService authService;
-  private final SessionRegistry sessionRegistry;
+  private final JwtService jwtService;
+  private final JwtSessionManager jwtSessionManager;
 
   @Transactional
   @Override
@@ -96,10 +98,9 @@ public class BasicUserService implements UserService {
   public List<UserDto> findAll() {
     log.debug("모든 사용자 조회 시작");
 
-    Set<UUID> onlineUserIds = sessionRegistry.getAllPrincipals().stream()
-        .filter(principal -> !sessionRegistry.getAllSessions(principal, false).isEmpty())
-        .filter(principal -> principal instanceof CustomUserDetails)
-        .map(principal -> ((CustomUserDetails) principal).getUserDto().id())
+    Set<UUID> onlineUserIds = userRepository.findAll().stream()
+        .map(User::getId)
+        .filter(jwtSessionManager::isUserLoggedIn)
         .collect(Collectors.toSet());
 
     List<UserDto> userDtos = userRepository.findAll()
@@ -150,9 +151,31 @@ public class BasicUserService implements UserService {
         .orElse(null);
 
     String newPassword = passwordEncoder.encode(userUpdateRequest.newPassword());
+
+    boolean shouldInvalidateSessions = false;
+
+    if (!user.getUsername().equals(newUsername)) {
+      shouldInvalidateSessions = true;
+      log.info("사용자명 변경 감지: {} → {}", user.getUsername(), newUsername);
+    }
+
+    if (!user.getEmail().equals(newEmail)) {
+      shouldInvalidateSessions = true;
+      log.info("이메일 변경 감지: {} → {}", user.getEmail(), newEmail);
+    }
+
+    if (!user.getPassword().equals(newPassword)) {
+      shouldInvalidateSessions = true;
+      log.info("비밀번호 변경 감지");
+    }
     user.update(newUsername, newEmail, newPassword, nullableProfile);
 
     log.info("사용자 수정 완료: id={}", userId);
+
+    if (shouldInvalidateSessions) {
+      jwtService.invalidateAllUserSessions(userId);
+    }
+
     return userMapper.toDto(user);
   }
 
@@ -168,6 +191,7 @@ public class BasicUserService implements UserService {
 
     userRepository.deleteById(userId);
     log.info("사용자 삭제 완료: id={}", userId);
+    jwtService.invalidateAllUserSessions(userId);
   }
 
   public boolean isOwnerOrAdmin(UUID userId, String currentUsername) {

@@ -4,12 +4,8 @@ import com.sprint.mission.discodeit.controller.api.AuthApi;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.LoginRequest;
 import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
-import com.sprint.mission.discodeit.exception.security.ExpiredTokenException;
-import com.sprint.mission.discodeit.exception.security.InvalidRefreshTokenException;
-import com.sprint.mission.discodeit.exception.security.InvalidTokenException;
 import com.sprint.mission.discodeit.security.CustomUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtService;
-import com.sprint.mission.discodeit.security.jwt.JwtTokenPair;
 import com.sprint.mission.discodeit.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -57,10 +54,13 @@ public class AuthController implements AuthApi {
       );
 
       CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+      UserDto userDto = userDetails.getUserDto();
 
-      JwtTokenPair tokenPair = jwtService.generateTokens(userDetails.getUserDto());
+      String sessionId = UUID.randomUUID().toString();
+      String accessToken = jwtService.generateAccessToken(userDto.id(), sessionId);
+      String refreshToken = jwtService.generateRefreshToken(userDto.id());
 
-      ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenPair.refreshToken())
+      ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
           .httpOnly(true)
           .secure(true)
           .path("/")
@@ -70,8 +70,9 @@ public class AuthController implements AuthApi {
 
       response.addHeader("Set-Cookie", refreshCookie.toString());
 
-      log.info("로그인 성공: 사용자 ={}", requset.username());
-      return ResponseEntity.ok(tokenPair.accessToken());
+      log.info("로그인 성공: 사용자 = {}", requset.username());
+      return ResponseEntity.ok(accessToken);
+
     } catch (AuthenticationException e) {
       log.warn("로그인 실패: 사용자 ={}, 사유 = {}", requset.username(), e.getMessage());
 
@@ -97,21 +98,20 @@ public class AuthController implements AuthApi {
       String refreshToken = extractRefreshTokenFromCookie(request);
 
       if (refreshToken == null) {
-        log.debug("No refresh token found in cookies");
+        log.debug("쿠키에서 Refresh Token을 찾을 수 없습니다");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
       }
 
-      String accessToken = jwtService.getAccessTokenByRefreshToken(refreshToken);
-
-      if (accessToken == null) {
-        log.debug("Failed to get access token for refresh token");
+      if (!jwtService.isValidRefreshToken(refreshToken)) {
+        log.debug("유효하지 않은 Refresh Token입니다");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
       }
 
+      String accessToken = jwtService.refreshAccessToken(refreshToken);
       return ResponseEntity.ok(accessToken);
 
     } catch (Exception e) {
-      log.error("Error getting access token", e);
+      log.error("Access Token 가져오기 실패", e);
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
   }
@@ -129,34 +129,44 @@ public class AuthController implements AuthApi {
 
   @PostMapping("/refresh")
   public ResponseEntity<String> refreshToken(
-      @CookieValue(value = "refresh_token", required = false) String refreshToken,
+      @CookieValue(value = "refreshToken", required = false) String refreshToken,
       HttpServletResponse response) {
 
     if (refreshToken == null || refreshToken.isEmpty()) {
+      log.debug("Refresh Token이 없습니다");
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body("Refresh token not found");
     }
 
     try {
-      JwtTokenPair tokenPair = jwtService.refreshTokens(refreshToken);
+      if (!jwtService.isValidRefreshToken(refreshToken)) {
+        log.debug("유효하지 않은 Refresh Token입니다");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body("Invalid refresh token");
+      }
 
-      // 새로운 리프레시 토큰을 쿠키에 저장
-      Cookie refreshCookie = new Cookie("refresh_token", tokenPair.refreshToken());
-      refreshCookie.setHttpOnly(true);
-      refreshCookie.setSecure(true); // HTTPS 환경에서만 사용
-      refreshCookie.setPath("/");
-      refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-      response.addCookie(refreshCookie);
+      String newAccessToken = jwtService.refreshAccessToken(refreshToken);
 
-      // 액세스 토큰을 문자열로 반환
-      return ResponseEntity.ok(tokenPair.accessToken());
+      UUID userId = jwtService.getUserIdFromToken(refreshToken);
+      String newRefreshToken = jwtService.generateRefreshToken(userId);
 
-    } catch (InvalidRefreshTokenException | ExpiredTokenException e) {
-      log.debug("Token refresh failed: {}", e.getMessage());
+      ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRefreshToken)
+          .httpOnly(true)
+          .secure(true)
+          .path("/")
+          .maxAge(7 * 24 * 60 * 60)
+          .sameSite("Strict")
+          .build();
+
+      response.addHeader("Set-Cookie", refreshCookie.toString());
+      return ResponseEntity.ok(newAccessToken);
+
+    } catch (IllegalArgumentException e) {
+      log.debug("토큰 갱신 실패: {}", e.getMessage());
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body(e.getMessage());
     } catch (Exception e) {
-      log.error("Unexpected error during token refresh", e);
+      log.error("토큰 갱신 중 예상치 못한 오류", e);
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body("Token refresh failed");
     }
@@ -166,19 +176,27 @@ public class AuthController implements AuthApi {
   public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
     try {
       String refreshToken = extractRefreshTokenFromCookie(request);
+      String accessToken = extractAccessTokenFromHeader(request);
 
-      if (refreshToken != null) {
-        jwtService.invalidateRefreshToken(refreshToken);
-        log.info("Refresh token invalidated successfully");
+      if (refreshToken != null && jwtService.isValidRefreshToken(refreshToken)) {
+        UUID userId = jwtService.getUserIdFromToken(refreshToken);
+        jwtService.invalidateAllUserSessions(userId);
+        log.info("사용자 {}의 모든 세션이 무효회돠었습니다", userId);
+      }
+
+      if (accessToken != null && jwtService.isValidAccessToken(accessToken)) {
+        String sessionId = jwtService.getSessionIdFromToken(accessToken);
+        jwtService.invalidateSession(sessionId, accessToken);
+        log.info("개별 세션이 무효화되었습니다");
       }
 
       invalidateRefreshTokenCookie(response);
-
+      log.info("로그아웃 완료");
       return ResponseEntity.ok().build();
 
     } catch (Exception e) {
-      log.error("Error during logout", e);
-
+      log.error("로그아웃 중 오류 발생", e);
+      // 오류가 발생해도 쿠키는 제거
       invalidateRefreshTokenCookie(response);
       return ResponseEntity.ok().build();
     }
@@ -190,18 +208,29 @@ public class AuthController implements AuthApi {
     }
 
     return Arrays.stream(request.getCookies())
-        .filter(cookie -> "refresh_token".equals(cookie.getName()))
+        .filter(cookie -> "refreshToken".equals(cookie.getName()))
         .map(Cookie::getValue)
         .findFirst()
         .orElse(null);
   }
 
+  private String extractAccessTokenFromHeader(HttpServletRequest request) {
+    String authHeader = request.getHeader("Authorization");
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      return authHeader.substring(7);
+    }
+    return null;
+  }
+
   private void invalidateRefreshTokenCookie(HttpServletResponse response) {
-    Cookie cookie = new Cookie("refresh_token", null);
-    cookie.setMaxAge(0);
-    cookie.setPath("/");
-    cookie.setHttpOnly(true);
-    cookie.setSecure(true);
-    response.addCookie(cookie);
+    ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+        .httpOnly(true)
+        .secure(true)
+        .path("/")
+        .maxAge(0) // 즉시 만료
+        .sameSite("Strict")
+        .build();
+
+    response.addHeader("Set-Cookie", expiredCookie.toString());
   }
 }
