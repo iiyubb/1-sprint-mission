@@ -13,10 +13,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 @Tag(name = "Channel", description = "Channel API")
 public interface ChannelApi {
@@ -29,7 +29,7 @@ public interface ChannelApi {
       )
   })
   ResponseEntity<ChannelDto> create(
-      @Parameter(description = "Public Channel 생성 정보") @Valid PublicChannelCreateRequest request
+      @Parameter(description = "Public Channel 생성 정보") PublicChannelCreateRequest request
   );
 
   @Operation(summary = "Private Channel 생성")
@@ -40,7 +40,7 @@ public interface ChannelApi {
       )
   })
   ResponseEntity<ChannelDto> create(
-      @Parameter(description = "Private Channel 생성 정보") @Valid PrivateChannelCreateRequest request
+      @Parameter(description = "Private Channel 생성 정보") PrivateChannelCreateRequest request
   );
 
   @Operation(summary = "Channel 정보 수정")
@@ -60,7 +60,7 @@ public interface ChannelApi {
   })
   ResponseEntity<ChannelDto> update(
       @Parameter(description = "수정할 Channel ID") UUID channelId,
-      @Parameter(description = "수정할 Channel 정보") @Valid PublicChannelUpdateRequest request
+      @Parameter(description = "수정할 Channel 정보") PublicChannelUpdateRequest request
   );
 
   @Operation(summary = "Channel 삭제")
@@ -85,6 +85,7 @@ public interface ChannelApi {
       )
   })
   ResponseEntity<List<ChannelDto>> findAll(
-      @Parameter(description = "조회할 User ID") UUID userId
+      @Parameter(description = "조회할 User ID") String userId,
+      Authentication authentication
   );
 } 

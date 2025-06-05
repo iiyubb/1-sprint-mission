@@ -1,22 +1,26 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "users")
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)  // JPA를 위한 기본 생성자
 public class User extends BaseUpdatableEntity {
 
@@ -29,16 +33,17 @@ public class User extends BaseUpdatableEntity {
   @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @JoinColumn(name = "profile_id", columnDefinition = "uuid")
   private BinaryContent profile;
-  @JsonManagedReference
-  @Setter(AccessLevel.PROTECTED)
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private UserStatus status;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private Role role;
 
   public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
     this.password = password;
     this.profile = profile;
+    this.role = Role.USER;
   }
 
   public void update(String newUsername, String newEmail, String newPassword,
@@ -54,6 +59,12 @@ public class User extends BaseUpdatableEntity {
     }
     if (newProfile != null) {
       this.profile = newProfile;
+    }
+  }
+
+  public void updateRole(Role newRole) {
+    if (newRole != null && !newRole.equals(this.role)) {
+      this.role = newRole;
     }
   }
 }

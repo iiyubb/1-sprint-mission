@@ -3,54 +3,63 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.user.UserEmailAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
-import com.sprint.mission.discodeit.exception.user.UsernameAlreadyExistsException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import com.sprint.mission.discodeit.security.CustomUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtService;
+import com.sprint.mission.discodeit.security.jwt.JwtSessionManager;
+import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
-@Slf4j
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
-  private final UserStatusRepository userStatusRepository;
+  private final JwtService jwtService;
+  private final JwtSessionManager jwtSessionManager;
 
   @Transactional
   @Override
   public UserDto create(UserCreateRequest userCreateRequest,
       Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
+    log.debug("사용자 생성 시작: {}", userCreateRequest);
+
     String username = userCreateRequest.username();
     String email = userCreateRequest.email();
 
     if (userRepository.existsByEmail(email)) {
-      log.error("[유저 등록 실패] 해당 e-mail은 이미 등록되어 있습니다. e-mail: {}", email);
-      throw new UserEmailAlreadyExistsException();
+      throw UserAlreadyExistsException.withEmail(email);
     }
     if (userRepository.existsByUsername(username)) {
-      log.error("[유저 등록 실패] 해당 유저 이름은 이미 등록되어 있습니다. 유저 이름: {}", username);
-      throw new UsernameAlreadyExistsException();
+      throw UserAlreadyExistsException.withUsername(username);
     }
 
     BinaryContent nullableProfile = optionalProfileCreateRequest
@@ -65,69 +74,66 @@ public class BasicUserService implements UserService {
           return binaryContent;
         })
         .orElse(null);
-    log.info("[유저 등록 시도] 유저 프로필이 생성되었습니다.");
 
-    String password = userCreateRequest.password();
-
+    String password = passwordEncoder.encode(userCreateRequest.password());
     User user = new User(username, email, password, nullableProfile);
-    log.info("[유저 등록 시도] 유저 ID: {}", user.getId());
-
-    Instant now = Instant.now();
-    UserStatus userStatus = new UserStatus(user, now);
-    log.info("[유저 상태 등록 시도] 유저 상태 ID: {}", userStatus.getId());
 
     userRepository.save(user);
-    log.info("[유저 등록 성공] 유저 상태 ID: {}", userStatus.getId());
-
-    userStatusRepository.save(userStatus);
-    log.info("[유저 상태 등록 성공] 유저 상태 ID: {}", userStatus.getId());
-
+    log.info("사용자 생성 완료: id={}, username={}", user.getId(), username);
     return userMapper.toDto(user);
   }
 
   @Override
   public UserDto find(UUID userId) {
-    log.info("[유저 조회 시도] 유저 ID: {}", userId);
-
-    return userRepository.findById(userId)
+    log.debug("사용자 조회 시작: id={}", userId);
+    UserDto userDto = userRepository.findById(userId)
         .map(userMapper::toDto)
-        .orElseThrow(() -> {
-          log.error("[유저 조회 실패] 해당 유저를 찾을 수 없습니다. 유저 ID: {}", userId);
-          return new UserNotFoundException();
-        });
+        .orElseThrow(() -> UserNotFoundException.withId(userId));
+
+    log.info("사용자 조회 완료: id={}", userId);
+    return userDto;
   }
 
   @Override
   public List<UserDto> findAll() {
-    log.info("[모든 유저 조회 시도]");
+    log.debug("모든 사용자 조회 시작");
 
-    return userRepository.findAllWithProfileAndStatus()
+    Set<UUID> onlineUserIds = userRepository.findAll().stream()
+        .map(User::getId)
+        .filter(jwtSessionManager::isUserLoggedIn)
+        .collect(Collectors.toSet());
+
+    List<UserDto> userDtos = userRepository.findAll()
         .stream()
-        .map(userMapper::toDto)
+        .map(user -> userMapper.toDto(user, onlineUserIds.contains(user.getId())))
         .toList();
+
+    log.info("모든 사용자 조회 완료: 총 {}명", userDtos.size());
+    return userDtos;
   }
 
+  @PreAuthorize("hasRole('ADMIN') or principal.userDto.id == #userId")
   @Transactional
   @Override
   public UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
       Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
-    log.info("[유저 수정 시도]");
+    log.debug("사용자 수정 시작: id={}, request={}", userId, userUpdateRequest);
 
     User user = userRepository.findById(userId)
         .orElseThrow(() -> {
-          log.error("[유저 조회 실패] 해당 유저를 찾을 수 없습니다. 유저 ID: {}", userId);
-          return new UserNotFoundException();
+          UserNotFoundException exception = UserNotFoundException.withId(userId);
+          return exception;
         });
 
     String newUsername = userUpdateRequest.newUsername();
     String newEmail = userUpdateRequest.newEmail();
+
     if (userRepository.existsByEmail(newEmail)) {
-      log.error("[유저 등록 실패] 해당 e-mail은 이미 등록되어 있습니다. e-mail: {}", newEmail);
-      throw new UserEmailAlreadyExistsException();
+      throw UserAlreadyExistsException.withEmail(newEmail);
     }
+
     if (userRepository.existsByUsername(newUsername)) {
-      log.error("[유저 등록 실패] 해당 유저 이름은 이미 등록되어 있습니다. 유저 이름: {}", newUsername);
-      throw new UsernameAlreadyExistsException();
+      throw UserAlreadyExistsException.withUsername(newUsername);
     }
 
     BinaryContent nullableProfile = optionalProfileCreateRequest
@@ -143,26 +149,59 @@ public class BasicUserService implements UserService {
           return binaryContent;
         })
         .orElse(null);
-    log.info("[유저 수정 시도] 유저 프로필이 수정되었습니다. 유저 ID: {}", userId);
 
-    String newPassword = userUpdateRequest.newPassword();
+    String newPassword = passwordEncoder.encode(userUpdateRequest.newPassword());
+
+    boolean shouldInvalidateSessions = false;
+
+    if (!user.getUsername().equals(newUsername)) {
+      shouldInvalidateSessions = true;
+      log.info("사용자명 변경 감지: {} → {}", user.getUsername(), newUsername);
+    }
+
+    if (!user.getEmail().equals(newEmail)) {
+      shouldInvalidateSessions = true;
+      log.info("이메일 변경 감지: {} → {}", user.getEmail(), newEmail);
+    }
+
+    if (!user.getPassword().equals(newPassword)) {
+      shouldInvalidateSessions = true;
+      log.info("비밀번호 변경 감지");
+    }
     user.update(newUsername, newEmail, newPassword, nullableProfile);
-    log.info("[유저 수정 성공] 유저 ID: {}", userId);
+
+    log.info("사용자 수정 완료: id={}", userId);
+
+    if (shouldInvalidateSessions) {
+      jwtService.invalidateAllUserSessions(userId);
+    }
 
     return userMapper.toDto(user);
   }
 
+  @PreAuthorize("hasRole('ADMIN') or principal.userDto.id == #userId")
   @Transactional
   @Override
   public void delete(UUID userId) {
-    log.info("[유저 삭제 시도] 유저 ID: {}", userId);
+    log.debug("사용자 삭제 시작: id={}", userId);
 
     if (!userRepository.existsById(userId)) {
-      log.error("[유저 조회 실패] 해당 유저를 찾을 수 없습니다. 유저 ID: {}", userId);
-      throw new UserNotFoundException();
+      throw UserNotFoundException.withId(userId);
     }
 
     userRepository.deleteById(userId);
-    log.info("[유저 삭제 성공] 유저 ID: {}", userId);
+    log.info("사용자 삭제 완료: id={}", userId);
+    jwtService.invalidateAllUserSessions(userId);
+  }
+
+  public boolean isOwnerOrAdmin(UUID userId, String currentUsername) {
+    User targetUser = userRepository.findById(userId)
+        .orElseThrow(() -> UserNotFoundException.withId(userId));
+
+    User currentUser = userRepository.findByUsername(currentUsername)
+        .orElseThrow(() -> UserNotFoundException.withUsername(currentUsername));
+
+    return targetUser.getId().equals(currentUser.getId()) ||
+        currentUser.getRole().name().equals(Role.ADMIN.name());
   }
 }

@@ -1,39 +1,27 @@
 package com.sprint.mission.discodeit.exception;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
-import lombok.AllArgsConstructor;
+
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ErrorResponse {
+    private final Instant timestamp;
+    private final String code;
+    private final String message;
+    private final Map<String, Object> details;
+    private final String exceptionType;
+    private final int status;
 
-  private final Instant timestamp;
-  private final String code;
-  private final String message;
-  private final Map<String, Object> details;
-  private final String exceptionType;
-  private final int status;
+    public ErrorResponse(DiscodeitException exception, int status) {
+        this(Instant.now(), exception.getErrorCode().name(), exception.getMessage(), exception.getDetails(), exception.getClass().getSimpleName(), status);
+    }
 
-  public ErrorResponse(HttpStatus status, ErrorCode errorCode) {
-    this.timestamp = Instant.now();
-    this.code = status.getReasonPhrase();
-    this.message = errorCode.getMessage();
-    this.details = null;
-    this.exceptionType = errorCode.name();
-    this.status = status.value();
-
-  }
-
-  public ErrorResponse(HttpStatus status, ErrorCode errorCode, Map<String, Object> details) {
-    this.timestamp = Instant.now();
-    this.code = status.getReasonPhrase();
-    this.message = errorCode.getMessage();
-    this.details = details;
-    this.exceptionType = errorCode.name();
-    this.status = status.value();
-  }
-
-}
+    public ErrorResponse(Exception exception, int status) {
+        this(Instant.now(), exception.getClass().getSimpleName(), exception.getMessage(), new HashMap<>(), exception.getClass().getSimpleName(), status);
+    }
+} 
