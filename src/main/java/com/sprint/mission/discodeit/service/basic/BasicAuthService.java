@@ -7,7 +7,6 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtService;
-import com.sprint.mission.discodeit.security.jwt.JwtSessionManager;
 import com.sprint.mission.discodeit.service.AuthService;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,8 +25,6 @@ public class BasicAuthService implements AuthService {
   private final UserRepository userRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
-  private final JwtSessionManager jwtSessionManager;
-  private final int maxConcurrentSessions;
 
   @Value("${ADMIN_USERNAME}")
   private String username;
@@ -38,15 +35,11 @@ public class BasicAuthService implements AuthService {
 
   public BasicAuthService(JwtService jwtService, UserRepository userRepository,
       UserMapper userMapper,
-      PasswordEncoder passwordEncoder,
-      JwtSessionManager jwtSessionManager,
-      @Value("${security.max-concurrent-sessions:1}") int maxConcurrentSessions) {
+      PasswordEncoder passwordEncoder) {
     this.jwtService = jwtService;
     this.userRepository = userRepository;
     this.userMapper = userMapper;
     this.passwordEncoder = passwordEncoder;
-    this.jwtSessionManager = jwtSessionManager;
-    this.maxConcurrentSessions = maxConcurrentSessions;
   }
 
   @Override
@@ -68,29 +61,17 @@ public class BasicAuthService implements AuthService {
 
   @Override
   public TokenResponse login(UUID userId) {
-    // 동시 로그인 제한 확인
-    if (jwtSessionManager.getActiveSessionCount(userId) >= maxConcurrentSessions) {
-      // 가장 오래된 세션의 액세스 토큰을 가져와서 무효화
-      String oldAccessToken = jwtSessionManager.removeOldestSession(userId);
-      if (oldAccessToken != null) {
-        String oldSessionId = jwtService.getSessionIdFromToken(oldAccessToken);
-        jwtService.invalidateSession(oldSessionId, oldAccessToken);
-      }
-    }
+    JwtService.TokenPair tokenPair = jwtService.generateTokenPair(userId);
 
-    // 새 세션 생성
-    String sessionId = UUID.randomUUID().toString();
-    String accessToken = jwtService.generateAccessToken(userId, sessionId);
-    String refreshToken = jwtService.generateRefreshToken(userId);
-
-    return new TokenResponse(accessToken, refreshToken);
+    log.info("사용자 로그인 완료: 사용자 ID = {}", userId);
+    return new TokenResponse(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
   }
 
   @Override
   public void logout(String accessToken) {
     if (jwtService.isValidAccessToken(accessToken)) {
-      String sessionId = jwtService.getSessionIdFromToken(accessToken);
-      jwtService.invalidateSession(sessionId, accessToken);
+      jwtService.logout(accessToken);
+      log.info("사용자 로그아웃 완료");
     }
   }
 
@@ -115,7 +96,7 @@ public class BasicAuthService implements AuthService {
     User updatedUser = userRepository.save(user);
 
     // 권한 변경 시 모든 세션 무효화 (보안상 중요)
-    jwtService.invalidateAllUserSessions(updatedUser.getId());
+    jwtService.logoutAll(updatedUser.getId());
 
     log.info("사용자 권한 업데이트 완료: userId = {}, role = {}, 모든 세션 무효화됨",
         updatedUser.getId(), updatedUser.getRole());
@@ -125,18 +106,18 @@ public class BasicAuthService implements AuthService {
 
   @Override
   public boolean isUserLoggedIn(UUID userId) {
-    return jwtSessionManager.isUserLoggedIn(userId);
+    return jwtService.isUserLoggedIn(userId);
   }
 
   @Override
   public TokenResponse refreshToken(String refreshToken) {
-    String newAccessToken = jwtService.refreshAccessToken(refreshToken);
-    return new TokenResponse(newAccessToken, refreshToken);
+    JwtService.TokenPair tokenPair = jwtService.refreshTokenPair(refreshToken);
+    return new TokenResponse(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
   }
 
   @Override
   public int getActiveSessionCount(UUID userId) {
-    return jwtSessionManager.getActiveSessionCount(userId);
+    return jwtService.getActiveSessionCount(userId);
   }
 
   public static class TokenResponse {
