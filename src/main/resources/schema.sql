@@ -15,11 +15,12 @@ CREATE TABLE users
 -- BinaryContent
 CREATE TABLE binary_contents
 (
-    id           uuid PRIMARY KEY,
-    created_at   timestamp with time zone NOT NULL,
-    file_name    varchar(255)             NOT NULL,
-    size         bigint                   NOT NULL,
-    content_type varchar(100)             NOT NULL
+    id            uuid PRIMARY KEY,
+    created_at    timestamp with time zone NOT NULL,
+    file_name     varchar(255)             NOT NULL,
+    size          bigint                   NOT NULL,
+    content_type  varchar(100)             NOT NULL,
+    upload_status varchar(20)              NOT NULL DEFAULT 'WAITING'
 );
 
 -- Channel
@@ -55,15 +56,17 @@ CREATE TABLE message_attachments
 -- ReadStatus
 CREATE TABLE read_statuses
 (
-    id           uuid PRIMARY KEY,
-    created_at   timestamp with time zone NOT NULL,
-    updated_at   timestamp with time zone,
-    user_id      uuid                     NOT NULL,
-    channel_id   uuid                     NOT NULL,
-    last_read_at timestamp with time zone NOT NULL,
+    id                   uuid PRIMARY KEY,
+    created_at           timestamp with time zone NOT NULL,
+    updated_at           timestamp with time zone,
+    user_id              uuid                     NOT NULL,
+    channel_id           uuid                     NOT NULL,
+    last_read_at         timestamp with time zone NOT NULL,
+    notification_enabled BOOLEAN                  NOT NULL DEFAULT TRUE,
     UNIQUE (user_id, channel_id)
 );
 
+-- jwt_sessions
 CREATE TABLE jwt_sessions
 (
     id              UUID PRIMARY KEY,
@@ -72,7 +75,7 @@ CREATE TABLE jwt_sessions
     refresh_token   TEXT                     NOT NULL,
     expiration_time TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP WITH TIME ZONE,
 
     UNIQUE (access_token),
     UNIQUE (refresh_token)
@@ -83,6 +86,33 @@ CREATE INDEX idx_jwt_sessions_user_id ON jwt_sessions (user_id);
 CREATE INDEX idx_jwt_sessions_expiration_time ON jwt_sessions (expiration_time);
 CREATE INDEX idx_jwt_sessions_user_expiration ON jwt_sessions (user_id, expiration_time);
 
+-- async_task_failures
+CREATE TABLE async_task_failures
+(
+    id                UUID primary key,
+    request_id        VARCHAR(255)             NOT NULL,
+    task_type         VARCHAR(100)             NOT NULL,
+    binary_content_id UUID                     NULL,
+    error_message     TEXT                     NULL,
+    retry_count       INT                      NULL,
+    created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP WITH TIME ZONE
+);
+
+-- notifications
+CREATE TABLE notifications
+(
+    id          UUID primary key,
+    receiver_id UUID                     NOT NULL,
+    type        VARCHAR(50)              NOT NULL,
+    target_id   UUID,
+    title       VARCHAR(255),
+    content     TEXT,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_receiver_created ON notifications (receiver_id, created_at DESC);
 
 -- 제약 조건
 -- User (1) -> BinaryContent (1)

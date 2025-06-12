@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.AsyncBinaryContentService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
@@ -32,6 +33,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -45,6 +48,7 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentStorage binaryContentStorage;
   private final BinaryContentRepository binaryContentRepository;
   private final PageResponseMapper pageResponseMapper;
+  private final AsyncBinaryContentService asyncBinaryContentService;
 
   @Transactional
   @Override
@@ -82,6 +86,30 @@ public class BasicMessageService implements MessageService {
     );
 
     messageRepository.save(message);
+
+    final List<BinaryContent> finalAttachments = attachments;
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCommit() {
+            log.info("트랜잭션 커밋 완료, 비동기 파일 업로드 시작");
+            for (int i = 0; i < finalAttachments.size(); i++) {
+              BinaryContent binaryContent = finalAttachments.get(i);
+              BinaryContentCreateRequest request = binaryContentCreateRequests.get(i);
+
+              asyncBinaryContentService.uploadFileAsync(
+                  binaryContent.getId(),
+                  request.bytes()
+              ).exceptionally(ex -> {
+                log.error("비동기 업로드 실패: binaryContent ID = {}",
+                    binaryContent.getId(), ex);
+                return null;
+              });
+            }
+          }
+        }
+    );
+
     log.info("메시지 생성 완료: id={}, channelId={}", message.getId(), channelId);
     return messageMapper.toDto(message);
   }
