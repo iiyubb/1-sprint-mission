@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtService;
+import com.sprint.mission.discodeit.security.jwt.JwtSessionManager;
 import com.sprint.mission.discodeit.service.AuthService;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,8 @@ public class BasicAuthService implements AuthService {
   private final UserRepository userRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
+  private final JwtSessionManager jwtSessionManager;
+  private final int maxConcurrentSessions;
 
   @Value("${ADMIN_USERNAME}")
   private String username;

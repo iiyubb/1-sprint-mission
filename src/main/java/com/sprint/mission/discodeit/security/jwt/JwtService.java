@@ -218,6 +218,7 @@ public class JwtService {
     log.info("전체 로그아웃 시작 - 사용자: {}", userId);
 
     List<String> accessTokens = sessionRepository.findAccessTokensByUserId(userId);
+    
     for (String accessToken : accessTokens) {
       try {
         Instant expirationTime = getExpirationFromToken(accessToken);
@@ -474,4 +475,5 @@ public class JwtService {
           '}';
     }
   }
+
 }
