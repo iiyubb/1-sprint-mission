@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value.Bool;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -90,6 +91,14 @@ public class BasicReadStatusService implements ReadStatusService {
 
     log.info("읽음 상태 수정 완료: id={}", readStatusId);
     return readStatusMapper.toDto(readStatus);
+  }
+
+  @Override
+  public void updateNotificationSetting(UUID userId, UUID channelId, Boolean enabled) {
+    int updatedCount = readStatusRepository.updateNotificationEnabled(userId, channelId, enabled);
+    if (updatedCount == 0) {
+      throw new IllegalArgumentException("읽기 상태를 찾을 수 없습니다.");
+    }
   }
 
   @Transactional

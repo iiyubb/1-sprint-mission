@@ -44,23 +44,22 @@ public class AuthController implements AuthApi {
   private final AuthenticationManager authenticationManager;
 
   @PostMapping("/login")
-  public ResponseEntity<?> login(@Valid @RequestBody LoginRequest requset,
+  public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
       HttpServletResponse response) {
-    log.info("로그인 요청: 사용자 = {}", requset.username());
+    log.info("로그인 요청: 사용자 = {}", request.username());
 
     try {
       Authentication authentication = authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(requset.username(), requset.password())
+          new UsernamePasswordAuthenticationToken(request.username(), request.password())
       );
 
       CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
       UserDto userDto = userDetails.getUserDto();
 
-      String sessionId = UUID.randomUUID().toString();
-      String accessToken = jwtService.generateAccessToken(userDto.id(), sessionId);
-      String refreshToken = jwtService.generateRefreshToken(userDto.id());
+      JwtService.TokenPair tokenPair = jwtService.generateTokenPair(userDto.id());
 
-      ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+      ResponseCookie refreshCookie = ResponseCookie.from("refreshToken",
+              tokenPair.getRefreshToken())
           .httpOnly(true)
           .secure(true)
           .path("/")
@@ -70,11 +69,14 @@ public class AuthController implements AuthApi {
 
       response.addHeader("Set-Cookie", refreshCookie.toString());
 
-      log.info("로그인 성공: 사용자 = {}", requset.username());
-      return ResponseEntity.ok(accessToken);
+      log.info("로그인 성공: 사용자 = {}", request.username());
+      return ResponseEntity.ok(Map.of(
+          "accessToken", tokenPair.getAccessToken(),
+          "sessionId", tokenPair.getSessionId().toString()
+      ));
 
     } catch (AuthenticationException e) {
-      log.warn("로그인 실패: 사용자 ={}, 사유 = {}", requset.username(), e.getMessage());
+      log.warn("로그인 실패: 사용자 ={}, 사유 = {}", request.username(), e.getMessage());
 
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body(Map.of(
@@ -93,26 +95,33 @@ public class AuthController implements AuthApi {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<String> getAccessToken(HttpServletRequest request) {
+  public ResponseEntity<?> getAccessToken(HttpServletRequest request) {
     try {
       String refreshToken = extractRefreshTokenFromCookie(request);
 
       if (refreshToken == null) {
         log.debug("쿠키에서 Refresh Token을 찾을 수 없습니다");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("error", "REFRESH_TOKEN_NOT_FOUND", "message", "리프레시 토큰이 없습니다."));
       }
 
       if (!jwtService.isValidRefreshToken(refreshToken)) {
         log.debug("유효하지 않은 Refresh Token입니다");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("error", "INVALID_REFRESH_TOKEN", "message", "유효하지 않은 리프레시 토큰입니다."));
       }
 
-      String accessToken = jwtService.refreshAccessToken(refreshToken);
-      return ResponseEntity.ok(accessToken);
+      JwtService.TokenPair tokenPair = jwtService.refreshTokenPair(refreshToken);
+
+      return ResponseEntity.ok(Map.of(
+          "accessToken", tokenPair.getAccessToken(),
+          "sessionId", tokenPair.getSessionId().toString()
+      ));
 
     } catch (Exception e) {
       log.error("Access Token 가져오기 실패", e);
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "TOKEN_REFRESH_FAILED", "message", "토큰 갱신에 실패했습니다."));
     }
   }
 
@@ -128,29 +137,27 @@ public class AuthController implements AuthApi {
   }
 
   @PostMapping("/refresh")
-  public ResponseEntity<String> refreshToken(
+  public ResponseEntity<?> refreshToken(
       @CookieValue(value = "refreshToken", required = false) String refreshToken,
       HttpServletResponse response) {
 
     if (refreshToken == null || refreshToken.isEmpty()) {
       log.debug("Refresh Token이 없습니다");
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("Refresh token not found");
+          .body(Map.of("error", "REFRESH_TOKEN_NOT_FOUND", "message", "리프레시 토큰이 없습니다."));
     }
 
     try {
       if (!jwtService.isValidRefreshToken(refreshToken)) {
         log.debug("유효하지 않은 Refresh Token입니다");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body("Invalid refresh token");
+            .body(Map.of("error", "INVALID_REFRESH_TOKEN", "message", "유효하지 않은 리프레시 토큰입니다."));
       }
 
-      String newAccessToken = jwtService.refreshAccessToken(refreshToken);
+      JwtService.TokenPair tokenPair = jwtService.refreshTokenPair(refreshToken);
 
-      UUID userId = jwtService.getUserIdFromToken(refreshToken);
-      String newRefreshToken = jwtService.generateRefreshToken(userId);
-
-      ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRefreshToken)
+      ResponseCookie refreshCookie = ResponseCookie.from("refreshToken",
+              tokenPair.getRefreshToken())
           .httpOnly(true)
           .secure(true)
           .path("/")
@@ -159,46 +166,57 @@ public class AuthController implements AuthApi {
           .build();
 
       response.addHeader("Set-Cookie", refreshCookie.toString());
-      return ResponseEntity.ok(newAccessToken);
+      return ResponseEntity.ok(Map.of(
+          "accessToken", tokenPair.getAccessToken(),
+          "sessionId", tokenPair.getSessionId()
+      ));
 
     } catch (IllegalArgumentException e) {
       log.debug("토큰 갱신 실패: {}", e.getMessage());
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body(e.getMessage());
+          .body(Map.of("error", "TOKEN_REFRESH_FAILED", "message", e.getMessage()));
     } catch (Exception e) {
       log.error("토큰 갱신 중 예상치 못한 오류", e);
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("Token refresh failed");
+          .body(Map.of("error", "INTERNAL_ERROR", "message", "토큰 갱신 중 오류가 발생했습니다."));
     }
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+  public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
     try {
       String refreshToken = extractRefreshTokenFromCookie(request);
       String accessToken = extractAccessTokenFromHeader(request);
 
+      boolean logoutFlag = false;
+
       if (refreshToken != null && jwtService.isValidRefreshToken(refreshToken)) {
         UUID userId = jwtService.getUserIdFromToken(refreshToken);
-        jwtService.invalidateAllUserSessions(userId);
+        jwtService.logoutAll(userId);
         log.info("사용자 {}의 모든 세션이 무효회돠었습니다", userId);
+        logoutFlag = true;
       }
 
       if (accessToken != null && jwtService.isValidAccessToken(accessToken)) {
-        String sessionId = jwtService.getSessionIdFromToken(accessToken);
-        jwtService.invalidateSession(sessionId, accessToken);
+        jwtService.logout(accessToken);
         log.info("개별 세션이 무효화되었습니다");
+        logoutFlag = true;
       }
 
       invalidateRefreshTokenCookie(response);
-      log.info("로그아웃 완료");
-      return ResponseEntity.ok().build();
+      if (logoutFlag) {
+        log.info("로그아웃 완료");
+        return ResponseEntity.ok(Map.of("message", "로그아웃이 완료되었습니다."));
+      } else {
+        log.warn("유효한 토큰이 없어 로그아웃을 수행하지 않았습니다.");
+        return ResponseEntity.ok(Map.of("message", "이미 로그아웃된 상태입니다."));
+      }
 
     } catch (Exception e) {
       log.error("로그아웃 중 오류 발생", e);
       // 오류가 발생해도 쿠키는 제거
       invalidateRefreshTokenCookie(response);
-      return ResponseEntity.ok().build();
+      return ResponseEntity.ok(Map.of("message", "로그아웃이 완료되었습니다."));
     }
   }
 

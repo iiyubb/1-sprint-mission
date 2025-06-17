@@ -15,11 +15,12 @@ CREATE TABLE users
 -- BinaryContent
 CREATE TABLE binary_contents
 (
-    id           uuid PRIMARY KEY,
-    created_at   timestamp with time zone NOT NULL,
-    file_name    varchar(255)             NOT NULL,
-    size         bigint                   NOT NULL,
-    content_type varchar(100)             NOT NULL
+    id            uuid PRIMARY KEY,
+    created_at    timestamp with time zone NOT NULL,
+    file_name     varchar(255)             NOT NULL,
+    size          bigint                   NOT NULL,
+    content_type  varchar(100)             NOT NULL,
+    upload_status varchar(20)              NOT NULL DEFAULT 'WAITING'
 );
 
 -- Channel
@@ -55,60 +56,63 @@ CREATE TABLE message_attachments
 -- ReadStatus
 CREATE TABLE read_statuses
 (
-    id           uuid PRIMARY KEY,
-    created_at   timestamp with time zone NOT NULL,
-    updated_at   timestamp with time zone,
-    user_id      uuid                     NOT NULL,
-    channel_id   uuid                     NOT NULL,
-    last_read_at timestamp with time zone NOT NULL,
+    id                   uuid PRIMARY KEY,
+    created_at           timestamp with time zone NOT NULL,
+    updated_at           timestamp with time zone,
+    user_id              uuid                     NOT NULL,
+    channel_id           uuid                     NOT NULL,
+    last_read_at         timestamp with time zone NOT NULL,
+    notification_enabled BOOLEAN                  NOT NULL DEFAULT TRUE,
     UNIQUE (user_id, channel_id)
 );
 
+-- jwt_sessions
 CREATE TABLE jwt_sessions
 (
-    id                       UUID PRIMARY KEY,
-    user_id                  UUID                     NOT NULL,
-    access_token             TEXT                     NOT NULL,
-    refresh_token            TEXT                     NOT NULL,
-    access_token_expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
-    refresh_token_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    is_active                BOOLEAN                  NOT NULL DEFAULT true,
-    created_at               TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at               TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              UUID PRIMARY KEY,
+    user_id         UUID                     NOT NULL,
+    access_token    TEXT                     NOT NULL,
+    refresh_token   TEXT                     NOT NULL,
+    expiration_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP WITH TIME ZONE,
 
-    -- 외래키 제약조건
-    CONSTRAINT fk_jwt_sessions_user_id
-        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    UNIQUE (access_token),
+    UNIQUE (refresh_token)
 );
 
 -- 성능 최적화를 위한 인덱스들
 CREATE INDEX idx_jwt_sessions_user_id ON jwt_sessions (user_id);
-CREATE INDEX idx_jwt_sessions_access_token ON jwt_sessions (access_token);
-CREATE INDEX idx_jwt_sessions_refresh_token ON jwt_sessions (refresh_token);
-CREATE INDEX idx_jwt_sessions_is_active ON jwt_sessions (is_active);
-CREATE INDEX idx_jwt_sessions_expires_at ON jwt_sessions (access_token_expires_at, refresh_token_expires_at);
+CREATE INDEX idx_jwt_sessions_expiration_time ON jwt_sessions (expiration_time);
+CREATE INDEX idx_jwt_sessions_user_expiration ON jwt_sessions (user_id, expiration_time);
 
--- 사용자당 하나의 활성 세션만 허용하는 부분 유니크 인덱스
-CREATE UNIQUE INDEX idx_jwt_sessions_user_active
-    ON jwt_sessions (user_id)
-    WHERE is_active = true;
+-- async_task_failures
+CREATE TABLE async_task_failures
+(
+    id                UUID primary key,
+    request_id        VARCHAR(255)             NOT NULL,
+    task_type         VARCHAR(100)             NOT NULL,
+    binary_content_id UUID                     NULL,
+    error_message     TEXT                     NULL,
+    retry_count       INT                      NULL,
+    created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP WITH TIME ZONE
+);
 
--- updated_at 자동 업데이트를 위한 트리거 함수
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-    RETURNS TRIGGER AS
-$$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+-- notifications
+CREATE TABLE notifications
+(
+    id          UUID primary key,
+    receiver_id UUID                     NOT NULL,
+    type        VARCHAR(50)              NOT NULL,
+    target_id   UUID,
+    title       VARCHAR(255),
+    content     TEXT,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP WITH TIME ZONE
+);
 
--- updated_at 자동 업데이트 트리거
-CREATE TRIGGER update_jwt_sessions_updated_at
-    BEFORE UPDATE
-    ON jwt_sessions
-    FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
+CREATE INDEX idx_receiver_created ON notifications (receiver_id, created_at DESC);
 
 -- 제약 조건
 -- User (1) -> BinaryContent (1)

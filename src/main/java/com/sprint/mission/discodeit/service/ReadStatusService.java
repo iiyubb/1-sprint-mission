@@ -16,5 +16,7 @@ public interface ReadStatusService {
 
   ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request);
 
+  void updateNotificationSetting(UUID userId, UUID channelId, Boolean enabled);
+
   void delete(UUID readStatusId);
 }
